@@ -105,12 +105,12 @@ func (result *Result) ToPrompt() string {
 			return fmt.Sprintf("对话中没有找到 " + CallPrefix + ", 因此没有进行 function 调用")
 		}
 		if errors.Is(result.Error, ErrToolNotFound) {
-			return fmt.Sprintf(CallPrefix+"%s(%s) 调用错误! 因为没有找到名字是 %s 的 function，请检查输入是否正确.", result.FunctionName, strings.Join(result.ParamValues, ","), result.FunctionName)
+			return fmt.Sprintf(CallPrefix+"%s(%s) 调用错误!\n因为没有找到名字是 %s 的 function，请检查输入是否正确.", result.FunctionName, strings.Join(result.ParamValues, ","), result.FunctionName)
 		}
 		if errors.Is(result.Error, ErrParamsLenNotMet) {
-			return fmt.Sprintf(CallPrefix+"%s(%s) 调用错误! function %s 的参数应该是 %s，请检查输入是否正确.", result.FunctionName, strings.Join(result.ParamValues, ","), result.FunctionName, strings.Join(result.ExpectedParamNames, ","))
+			return fmt.Sprintf(CallPrefix+"%s(%s) 调用错误!\nfunction %s 的参数应该是 %s，请检查输入是否正确.", result.FunctionName, strings.Join(result.ParamValues, ","), result.FunctionName, strings.Join(result.ExpectedParamNames, ","))
 		}
-		return fmt.Sprintf(CallPrefix+"%s(%s) 调用错误! 具体错误是: %s", result.FunctionName, strings.Join(result.ParamValues, ","), jsonex.MustMarshalToString(result.Error))
+		return fmt.Sprintf(CallPrefix+"%s(%s) 调用错误!\n具体错误是: %s", result.FunctionName, strings.Join(result.ParamValues, ","), jsonex.MustMarshalToString(result.Error))
 	}
-	return fmt.Sprintf(CallPrefix+"%s(%s) 调用成功! 结果为: %s", result.FunctionName, strings.Join(result.ParamValues, ","), jsonex.MustMarshalToString(result))
+	return fmt.Sprintf(CallPrefix+"%s(%s) 调用成功!\n结果为: %s", result.FunctionName, strings.Join(result.ParamValues, ","), jsonex.MustMarshalToString(result.Response))
 }
