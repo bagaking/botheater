@@ -9,9 +9,9 @@ import (
 	"github.com/khicago/irr"
 )
 
-const callPrefix = "func_call::"
+const CallPrefix = "func_call::"
 
-var FuncCallRegex = regexp.MustCompile(callPrefix + `(\w+)\((.*?)\)`)
+var FuncCallRegex = regexp.MustCompile(CallPrefix + `(\w+)\((.*?)\)`)
 
 func ParseFunctionCall(ctx context.Context, content string) (funcName string, params []string, err error) {
 	log := wlog.ByCtx(ctx, "parse_function_call")

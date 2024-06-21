@@ -56,7 +56,8 @@ func TestNormalChat(ctx context.Context, b *bot.Bot, question string) {
 	if err != nil {
 		log.WithError(err).Errorf("chat failed")
 	}
-	log.Info("chat answer", jsonex.MustMarshalToString(resp))
+
+	log.Infof("=== chat answer ===\n%s", bot.Resp2Str(resp))
 }
 
 func TestContinuousChat(ctx context.Context, b *bot.Bot) {
@@ -74,11 +75,8 @@ func TestContinuousChat(ctx context.Context, b *bot.Bot) {
 			continue
 		}
 
-		for _, c := range resp.Choices {
-			log.Infof("=== chat answer ===\n%s\n", c.Message.Content)
-		}
+		log.Infof("=== chat answer ===\n%s", bot.Resp2Str(resp))
 
-		// fmt.Println("Chat answer:", jsonex.MustMarshalToString(resp))
 	}
 }
 

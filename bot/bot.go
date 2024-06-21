@@ -3,8 +3,6 @@ package bot
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/bagaking/goulp/jsonex"
 
@@ -44,19 +42,22 @@ func New(conf BotConfig, maas *client.MaaS, tm *tool.Manager) *Bot {
 func PushFunctionCallMSG(msgs []*api.Message, callResult string) []*api.Message {
 	mCall := &api.Message{
 		Content: callResult,
+		Name:    tool.CallPrefix,
 		Role:    api.ChatRoleAssistant,
 	}
-	l := len(msgs)
-	if l == 0 {
-		return []*api.Message{mCall}
-	}
-	if msgs[l-1] == MSGContinue {
-		msgs[l-1] = mCall
-	} else {
-		msgs = append(msgs, mCall)
+
+	for l := len(msgs); len(msgs) > 0 && msgs[l-1] == MSGContinue; l = len(msgs) { // remote continue cmd
+		msgs = msgs[:l-1]
 	}
 
-	return msgs
+	// todo: merge 规则可以调整
+	for l := len(msgs); len(msgs) > 0 && msgs[l-1].Name == tool.CallPrefix; l = len(msgs) { // merge calls
+		if str, ok := msgs[l-1].Content.(string); ok {
+			mCall.Content = str + "\n\n" + callResult
+		}
+		msgs = msgs[:l-1]
+	}
+	return append(msgs, mCall)
 }
 
 var MSGContinue = &api.Message{
@@ -91,9 +92,9 @@ func (b *Bot) CreateMessagesFromHistory() []*api.Message {
 
 func (b *Bot) NormalReq(ctx context.Context, req *api.ChatReq, depth int) (*api.ChatResp, error) {
 	log, ctx := wlog.ByCtxAndCache(ctx, "normal_req")
-	log.Infof("| REQ >>> %s", req2Str(req))
+	log.Infof("| REQ >>> %s", Req2Str(req))
 
-	got, status, err := b.maas.Chat(b.Endpoint, req)
+	resp, status, err := b.maas.Chat(b.Endpoint, req)
 	if err != nil {
 		errVal := &api.Error{}
 		if errors.As(err, &errVal) { // the returned error always type of *api.Error
@@ -102,9 +103,16 @@ func (b *Bot) NormalReq(ctx context.Context, req *api.ChatReq, depth int) (*api.
 		return nil, irr.Wrap(err, "normal req failed, depth= %d", depth)
 	}
 
-	log.Infof("| RESP <<< %s", jsonex.MustMarshalToString(got))
+	log.Infof("| RESP <<< %s", jsonex.MustMarshalToString(resp))
 
-	for _, c := range got.Choices {
+	return b.TryHandleFunctionReq(ctx, req, resp, depth)
+}
+
+// TryHandleFunctionReq 如果有函数调用，则执行直到超出限制，否则返回结果
+func (b *Bot) TryHandleFunctionReq(ctx context.Context, req *api.ChatReq, resp *api.ChatResp, depth int) (*api.ChatResp, error) {
+	log, ctx := wlog.ByCtxAndCache(ctx, "handle_function_req")
+	got := ""
+	for _, c := range resp.Choices {
 		if c.Message == nil || c.Message.Content == "" {
 			continue
 		}
@@ -112,32 +120,30 @@ func (b *Bot) NormalReq(ctx context.Context, req *api.ChatReq, depth int) (*api.
 		if !ok {
 			continue
 		}
-
-		log.Infof("=== analysis %s", sContent)
-		if tool.HasFunctionCall(sContent) {
-			funcName, paramValues, err := tool.ParseFunctionCall(ctx, sContent)
-			callResult := ""
-
-			if err != nil {
-				log.WithError(err).Warnf("failed to parse function call")
-				callResult = err.Error() + "，请检查后重试"
-			} else {
-				result := b.tm.Execute(ctx, funcName, paramValues)
-				callResult = result.ToPrompt()
-
-				// todo：要求错误修正的 prompt 在最终正确后可以去掉
-			}
-
-			b.chatHistory.items = PushFunctionCallMSG(b.chatHistory.items, callResult)
-			req.Messages = PushFunctionCallMSG(req.Messages, callResult)
-
-			req.Messages = append(req.Messages, MSGContinue)
-
-			return b.NormalReq(ctx, req, depth+1)
-		}
+		got = sContent
+		break
 	}
 
-	return got, nil
+	if !tool.HasFunctionCall(got) {
+		return resp, nil
+	}
+
+	funcName, paramValues, err := tool.ParseFunctionCall(ctx, got)
+	callResult := ""
+	if err != nil {
+		log.WithError(err).Warnf("failed to parse function call")
+		callResult = err.Error() + "，请检查后重试"
+	} else {
+		result := b.tm.Execute(ctx, funcName, paramValues)
+		callResult = result.ToPrompt()
+		// todo：要求错误修正的 prompt 在最终正确后可以去掉
+	}
+
+	b.chatHistory.items = PushFunctionCallMSG(b.chatHistory.items, callResult)
+	req.Messages = PushFunctionCallMSG(req.Messages, callResult)
+	req.Messages = append(req.Messages, MSGContinue)
+
+	return b.NormalReq(ctx, req, depth+1)
 }
 
 func (b *Bot) NormalChat(ctx context.Context, question string) (*api.ChatResp, error) {
@@ -156,7 +162,7 @@ func (b *Bot) StreamChat(ctx context.Context, question string, handle func(resp 
 	b.chatHistory.Enqueue(b.MakeUserMessage(question))
 	req := b.CreateRequestFromHistory()
 
-	log.Info("| REQ >>> %s", req2Str(req))
+	log.Info("| REQ >>> %s", Req2Str(req))
 
 	ch, err := b.maas.StreamChatWithCtx(ctx, b.Endpoint, req)
 	if err != nil {
@@ -178,17 +184,4 @@ func (b *Bot) String() string {
 	data["conf"] = b.BotConfig
 	data["history"] = b.chatHistory
 	return jsonex.MustMarshalToString(data)
-}
-
-func req2Str(req *api.ChatReq) string {
-	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf("REQUEST (%d)\n", len(req.Messages)))
-	for i, msg := range req.Messages {
-		sb.WriteString(msg2Str(i, msg))
-	}
-	return sb.String()
-}
-
-func msg2Str(ind int, msg *api.Message) string {
-	return fmt.Sprintf("--- %d. [%s] --- \n%s\n--- %d. fin ---\n\n", ind, msg.Role, msg.Content, ind)
 }
