@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"github.com/bagaking/goulp/yaml"
 	"os"
+
+	"github.com/bagaking/goulp/yaml"
 
 	"github.com/bagaking/botheater/bot"
 	"github.com/bagaking/botheater/tool"
@@ -15,8 +16,8 @@ import (
 
 type (
 	Conf struct {
-		BotPrefabs []*bot.BotConfig `yaml:"bot_prefabs"`
-		bots       map[string]*bot.BotConfig
+		BotPrefabs []*bot.Config `yaml:"bot_prefabs"`
+		bots       map[string]*bot.Config
 	}
 )
 
@@ -33,7 +34,7 @@ func LoadConf(ctx context.Context) Conf {
 	log := wlog.ByCtx(ctx, "load_conf")
 	// 读取 YAML 文件
 	c := Conf{
-		bots: make(map[string]*bot.BotConfig),
+		bots: make(map[string]*bot.Config),
 	}
 	err := yaml.LoadYAMLFile(ConfigPath, &c)
 	if err != nil {

@@ -54,6 +54,10 @@ func (tm *Manager) GetTool(name string) (ITool, bool) {
 	return t, ok
 }
 
+func (tm *Manager) Count() int {
+	return len(tm.tools)
+}
+
 func (tm *Manager) RegisterTool(t ITool) {
 	tm.tools[t.Name()] = t
 }
@@ -110,7 +114,7 @@ func (result *Result) ToPrompt() string {
 		if errors.Is(result.Error, ErrParamsLenNotMet) {
 			return fmt.Sprintf(CallPrefix+"%s(%s) 调用错误!\nfunction %s 的参数应该是 %s，请检查输入是否正确.", result.FunctionName, strings.Join(result.ParamValues, ","), result.FunctionName, strings.Join(result.ExpectedParamNames, ","))
 		}
-		return fmt.Sprintf(CallPrefix+"%s(%s) 调用错误!\n具体错误是: %s", result.FunctionName, strings.Join(result.ParamValues, ","), jsonex.MustMarshalToString(result.Error))
+		return fmt.Sprintf(CallPrefix+"%s(%s) 调用错误!\n具体错误是: %v", result.FunctionName, strings.Join(result.ParamValues, ","), result.Error)
 	}
 	return fmt.Sprintf(CallPrefix+"%s(%s) 调用成功!\n结果为: %s", result.FunctionName, strings.Join(result.ParamValues, ","), jsonex.MustMarshalToString(result.Response))
 }

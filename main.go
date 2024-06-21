@@ -54,6 +54,8 @@ func main() {
 		log.WithError(err).Fatalf("create botheater_coordinator failed")
 	}
 
+	bot.InitAllActAs(ctx, botCoordinator, botFileReader, b)
+
 	log.Info(b.String())
 
 	// TestNormalChat(ctx, b, "给我一个好点子")
@@ -62,6 +64,7 @@ func main() {
 	// TestStreamChat(ctx, b, req)
 
 	h := history.NewHistory()
+	MultiAgentChat(ctx, h, botCoordinator, "接下来我要对本地仓库代码做优化，准备好了吗？") //
 	MultiAgentChat(ctx, h, botFileReader, "阅读当前目录下的关键代码内容后，找到和处理 req.Messages & b history 有关的代码，并提取出一个队列来对其进行优化。给我这个队列的代码")
 	MultiAgentChat(ctx, h, botCoordinator, "总结之前聊天里，你的观点, 以及用于佐证的代码") //
 	MultiAgentChat(ctx, h, b, "针对这些代码进行改写，使其更优雅，要注意不要重复造轮子")

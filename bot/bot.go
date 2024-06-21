@@ -7,7 +7,6 @@ import (
 	"github.com/bagaking/goulp/jsonex"
 	"github.com/bagaking/goulp/wlog"
 
-	"github.com/khicago/got/util/typer"
 	"github.com/khicago/irr"
 
 	"github.com/volcengine/volc-sdk-golang/service/maas/models/api/v2"
@@ -18,70 +17,56 @@ import (
 )
 
 type (
-	BotConfig struct {
-		Endpoint   string `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
+	Config struct {
+		Endpoint string `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
+
 		PrefabName string `yaml:"prefab_name,omitempty" json:"prefab_name,omitempty"`
+		Usage      string `yaml:"usage,omitempty" json:"usage,omitempty"`
 
 		Prompt *Prompt `yaml:"prompt,omitempty" json:"prompt,omitempty"`
+
+		// AckAs 表示这个 agent 的固有角色，用于支持多 Agent 模式
+		// 根据不同的角色，调度系统将 1. 启用特殊流程 2. 注入信息到 prompt (类似于 function)
+		AckAs        ActAs  `yaml:"ack_as,omitempty" json:"ack_as,omitempty"`
+		ActAsContext string `yaml:"act_as_context,omitempty" json:"act_as_context,omitempty"`
 	}
 
 	Bot struct {
-		*BotConfig
+		*Config
 
 		maas *client.MaaS
 		tm   *tool.Manager
 	}
 )
 
-func New(conf BotConfig, maas *client.MaaS, tm *tool.Manager) *Bot {
-	return &Bot{
-		BotConfig: &conf,
-		maas:      maas,
-		tm:        tm,
+func New(conf Config, maas *client.MaaS, tm *tool.Manager) *Bot {
+	bot := &Bot{
+		Config: &conf,
+		maas:   maas,
+		tm:     tm,
 	}
+	return bot
 }
 
-// PushFunctionCallMSG 如果队列中最后一个是 MSGContinue，则查到其之前
-func PushFunctionCallMSG(msgs []*api.Message, callResult string) []*api.Message {
-	mCall := &api.Message{
-		Content: callResult,
-		Name:    tool.CallPrefix,
-		Role:    api.ChatRoleAssistant,
-	}
+func (b *Bot) MakeSystemMessage(ctx context.Context) *api.Message {
+	msg := b.Prompt.BuildSystemMessage(ctx, b.tm)
 
-	for len(msgs) > 0 && typer.SliceLast(msgs) == MSGContinue { // remote continue cmd
-		msgs = msgs[:len(msgs)-1]
+	if b.ActAsContext != "" {
+		msg.Content = msg.Content.(string) + "\n\n" + b.ActAsContext
 	}
-
-	// todo: merge 规则可以调整
-	for l := len(msgs); len(msgs) > 0 && msgs[l-1].Name == tool.CallPrefix; l = len(msgs) { // merge calls
-		if str, ok := msgs[l-1].Content.(string); ok {
-			mCall.Content = str + "\n\n" + callResult
-		}
-		msgs = msgs[:l-1]
-	}
-	return append(msgs, mCall)
+	return msg
 }
 
-var MSGContinue = &api.Message{
-	Role:    api.ChatRoleUser,
-	Content: "根据 function 调用结果，继续解决我的问题",
-}
-
-func (b *Bot) MakeSystemMessage() *api.Message {
-	return b.Prompt.BuildSystemMessage(b.tm)
-}
-
-func (b *Bot) CreateRequestFromHistory(h *history.History) *api.ChatReq {
+func (b *Bot) CreateRequestFromHistory(ctx context.Context, h *history.History) *api.ChatReq {
 	req := &api.ChatReq{
-		Messages: b.CreateMessagesFromHistory(h),
+		Messages: b.CreateMessagesFromHistory(ctx, h),
 	}
 	return req
 }
 
-func (b *Bot) CreateMessagesFromHistory(h *history.History) []*api.Message {
+func (b *Bot) CreateMessagesFromHistory(ctx context.Context, h *history.History) []*api.Message {
 	messages := make([]*api.Message, 0, h.Len()+1)
-	messages = append(messages, b.MakeSystemMessage())
+	messages = append(messages, b.MakeSystemMessage(ctx))
 	messages = append(messages, h.All()...)
 	return messages
 }
@@ -106,7 +91,7 @@ func (b *Bot) NormalReq(ctx context.Context, h *history.History, req *api.ChatRe
 
 // TryHandleFunctionReq 如果有函数调用，则执行直到超出限制，否则返回结果
 func (b *Bot) TryHandleFunctionReq(ctx context.Context, h *history.History, req *api.ChatReq, resp *api.ChatResp, depth int) (*api.ChatResp, error) {
-	log, ctx := wlog.ByCtxAndCache(ctx, "handle_function_req")
+	log := wlog.ByCtx(ctx, "handle_function_req")
 	got := ""
 	for _, c := range resp.Choices {
 		if c.Message == nil || c.Message.Content == "" {
@@ -135,9 +120,9 @@ func (b *Bot) TryHandleFunctionReq(ctx context.Context, h *history.History, req 
 		// todo：要求错误修正的 prompt 在最终正确后可以去掉
 	}
 
-	h.Items = PushFunctionCallMSG(h.Items, callResult)
-	req.Messages = PushFunctionCallMSG(req.Messages, callResult)
-	req.Messages = append(req.Messages, MSGContinue)
+	h.Items = history.PushFunctionCallMSG(h.Items, callResult)
+	req.Messages = history.PushFunctionCallMSG(req.Messages, callResult)
+	req.Messages = append(req.Messages, history.MSGContinue)
 
 	return b.NormalReq(ctx, h, req, depth+1)
 }
@@ -146,7 +131,7 @@ func (b *Bot) NormalChat(ctx context.Context, h *history.History, question strin
 	log := wlog.ByCtx(ctx, "normal_chat")
 
 	h.EnqueueUserMsg(question)
-	req := b.CreateRequestFromHistory(h)
+	req := b.CreateRequestFromHistory(ctx, h)
 	got, err := b.NormalReq(ctx, h, req, 0)
 	if err != nil {
 		log.WithError(err).Error("normal chat failed")
@@ -158,7 +143,7 @@ func (b *Bot) NormalChat(ctx context.Context, h *history.History, question strin
 func (b *Bot) StreamChat(ctx context.Context, h *history.History, question string, handle func(resp *api.ChatResp)) error {
 	log := wlog.ByCtx(ctx, "stream_chat")
 	h.EnqueueUserMsg(question)
-	req := b.CreateRequestFromHistory(h)
+	req := b.CreateRequestFromHistory(ctx, h)
 
 	log.Info("| REQ >>> %s", Req2Str(req))
 
@@ -179,6 +164,6 @@ func (b *Bot) StreamChat(ctx context.Context, h *history.History, question strin
 
 func (b *Bot) String() string {
 	data := make(map[string]any)
-	data["conf"] = b.BotConfig
+	data["conf"] = b.Config
 	return jsonex.MustMarshalToString(data)
 }

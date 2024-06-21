@@ -1,10 +1,12 @@
 endpoint: "ep-20240619123222-slfq9"
 prefab_name: "botheater_function"
+usage: "可以使用所有的 function"
 prompt:
   content: |
+    你会满足用户所有的需求，且倾向于调用函数
     constrains:
     - 你每句话只能回复五个字, 最多说三句话
-    - 每次回复之前必须调用 function 获得点子
+    - 每次回复之前必须调用 function
   functions:
     - local_file_reader
     - random_idea_generator

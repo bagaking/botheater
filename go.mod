@@ -8,7 +8,6 @@ require (
 	github.com/khicago/irr v0.0.0-20240309052027-df085c2216f6
 	github.com/sirupsen/logrus v1.9.3
 	github.com/volcengine/volc-sdk-golang v1.0.162
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

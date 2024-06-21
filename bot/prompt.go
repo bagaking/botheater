@@ -1,7 +1,11 @@
 package bot
 
 import (
+	"context"
 	"fmt"
+
+	"github.com/bagaking/goulp/wlog"
+	"github.com/khicago/irr"
 
 	"github.com/bagaking/botheater/tool"
 	"github.com/volcengine/volc-sdk-golang/service/maas/models/api/v2"
@@ -29,23 +33,24 @@ func_call::search(\"用户的问题\")
 )
 
 // 获取函数信息
-func (p *Prompt) makeFunctions(tm *tool.Manager) string {
-	if p == nil || tm == nil {
-		return ""
+func (p *Prompt) makeFunctions(tm *tool.Manager) (string, error) {
+	if p == nil || tm == nil || tm.Count() == 0 || len(p.Functions) == 0 {
+		return "", nil
 	}
 
 	info := FuncTellStart
 	for i, fnName := range p.Functions {
 		t, ok := tm.GetTool(fnName)
 		if !ok {
-			return fmt.Sprintf("Error: function %s not found", fnName)
+			return "", irr.Error("Error: function %s not found", fnName)
 		}
 		info += fmt.Sprintf("%d. %s ; usage: %s ;\n  example: %v;\n", i+1, t.Name(), t.Usage(), t.Examples())
 	}
-	return info + FuncTellTail
+	return info + FuncTellTail, nil
 }
 
-func (p *Prompt) BuildSystemMessage(tm *tool.Manager) *api.Message {
+func (p *Prompt) BuildSystemMessage(ctx context.Context, tm *tool.Manager) *api.Message {
+	log := wlog.ByCtx(ctx, "BuildSystemMessage")
 	if p == nil {
 		return &api.Message{
 			Role:    api.ChatRoleSystem,
@@ -53,7 +58,11 @@ func (p *Prompt) BuildSystemMessage(tm *tool.Manager) *api.Message {
 		}
 	}
 	all := p.Content
-	functionInfo := p.makeFunctions(tm)
+
+	functionInfo, err := p.makeFunctions(tm)
+	if err != nil { // todo: 考虑下，当任一 function 没有加载，则都不会加载
+		log.WithError(err).Warnf("build functions failed")
+	}
 	if functionInfo != "" {
 		all += "\n\n" + functionInfo
 	}
