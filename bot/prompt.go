@@ -29,23 +29,23 @@ func_call::search(\"用户的问题\")
 )
 
 // 获取函数信息
-func (p *Prompt) makeFunctions(tm *tool.ToolManager) string {
+func (p *Prompt) makeFunctions(tm *tool.Manager) string {
 	if p == nil || tm == nil {
 		return ""
 	}
 
 	info := FuncTellStart
 	for i, fnName := range p.Functions {
-		tool, ok := tm.GetTool(fnName)
+		t, ok := tm.GetTool(fnName)
 		if !ok {
 			return fmt.Sprintf("Error: function %s not found", fnName)
 		}
-		info += fmt.Sprintf("%d. %s ; usage: %s ;\n  example: %v;\n", i+1, tool.Name(), tool.Usage(), tool.Examples())
+		info += fmt.Sprintf("%d. %s ; usage: %s ;\n  example: %v;\n", i+1, t.Name(), t.Usage(), t.Examples())
 	}
 	return info + FuncTellTail
 }
 
-func (p *Prompt) BuildSystemMessage(tm *tool.ToolManager) *api.Message {
+func (p *Prompt) BuildSystemMessage(tm *tool.Manager) *api.Message {
 	if p == nil {
 		return &api.Message{
 			Role:    api.ChatRoleSystem,

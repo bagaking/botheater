@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/bagaking/goulp/jsonex"
 	"github.com/bagaking/goulp/wlog"
 	"github.com/khicago/irr"
 )
@@ -28,7 +27,7 @@ func ParseFunctionCall(ctx context.Context, content string) (funcName string, pa
 	}
 	params = strings.Split(paramsStr, ",")
 
-	log.Infof("find function call: %s ( %v )", funcName, jsonex.MustMarshalToString(params))
+	log.Infof("find function call: %s ( %v )", funcName, strings.Join(params, ","))
 	return funcName, params, nil
 }
 

@@ -57,7 +57,7 @@ func LoadConf(ctx context.Context) Conf {
 	return c
 }
 
-func (c *Conf) NewBot(cli *client.MaaS, prefabName string, tm *tool.ToolManager) (*bot.Bot, error) {
+func (c *Conf) NewBot(cli *client.MaaS, prefabName string, tm *tool.Manager) (*bot.Bot, error) {
 	botConf, exists := c.bots[prefabName]
 	if !exists {
 		return nil, ErrPrefabNotFound

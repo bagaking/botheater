@@ -26,13 +26,13 @@ type (
 	Bot struct {
 		*BotConfig
 
-		chatHistory []*api.Message
+		chatHistory MsgHistory
 		maas        *client.MaaS
-		tm          *tool.ToolManager
+		tm          *tool.Manager
 	}
 )
 
-func New(conf BotConfig, maas *client.MaaS, tm *tool.ToolManager) *Bot {
+func New(conf BotConfig, maas *client.MaaS, tm *tool.Manager) *Bot {
 	return &Bot{
 		BotConfig: &conf,
 		maas:      maas,
@@ -52,7 +52,10 @@ func PushFunctionCallMSG(msgs []*api.Message, callResult string) []*api.Message 
 	}
 	if msgs[l-1] == MSGContinue {
 		msgs[l-1] = mCall
+	} else {
+		msgs = append(msgs, mCall)
 	}
+
 	return msgs
 }
 
@@ -72,11 +75,6 @@ func (b *Bot) MakeUserMessage(question string) *api.Message {
 	}
 }
 
-func (b *Bot) EnqueueHistory(msg *api.Message) *Bot {
-	b.chatHistory = append(b.chatHistory, msg)
-	return b
-}
-
 func (b *Bot) CreateRequestFromHistory() *api.ChatReq {
 	req := &api.ChatReq{
 		Messages: b.CreateMessagesFromHistory(),
@@ -85,9 +83,9 @@ func (b *Bot) CreateRequestFromHistory() *api.ChatReq {
 }
 
 func (b *Bot) CreateMessagesFromHistory() []*api.Message {
-	messages := make([]*api.Message, 0, len(b.chatHistory)+1)
+	messages := make([]*api.Message, 0, b.chatHistory.Len()+1)
 	messages = append(messages, b.MakeSystemMessage())
-	messages = append(messages, b.chatHistory...)
+	messages = append(messages, b.chatHistory.All()...)
 	return messages
 }
 
@@ -118,19 +116,21 @@ func (b *Bot) NormalReq(ctx context.Context, req *api.ChatReq, depth int) (*api.
 		log.Infof("=== analysis %s", sContent)
 		if tool.HasFunctionCall(sContent) {
 			funcName, paramValues, err := tool.ParseFunctionCall(ctx, sContent)
-			if err != nil {
-				log.WithError(err).Errorf("failed to parse function call")
-				continue
-			}
-			result, err := b.tm.Execute(ctx, funcName, paramValues)
-			if err != nil {
-				result = fmt.Sprintf("调用失败: %v", err)
-			}
-			// plainTXT := strings.Replace(sContent, fmt.Sprintf("func_call::%s(%s)", funcName, paramValues), "", -1)
-			callResult := fmt.Sprintf("func_call::%s(%s) 调用的结果为: %s", funcName, strings.Join(paramValues, ","), jsonex.MustMarshalToString(result))
+			callResult := ""
 
-			b.chatHistory = PushFunctionCallMSG(req.Messages, callResult)
+			if err != nil {
+				log.WithError(err).Warnf("failed to parse function call")
+				callResult = err.Error() + "，请检查后重试"
+			} else {
+				result := b.tm.Execute(ctx, funcName, paramValues)
+				callResult = result.ToPrompt()
+
+				// todo：要求错误修正的 prompt 在最终正确后可以去掉
+			}
+
+			b.chatHistory.items = PushFunctionCallMSG(b.chatHistory.items, callResult)
 			req.Messages = PushFunctionCallMSG(req.Messages, callResult)
+
 			req.Messages = append(req.Messages, MSGContinue)
 
 			return b.NormalReq(ctx, req, depth+1)
@@ -142,8 +142,8 @@ func (b *Bot) NormalReq(ctx context.Context, req *api.ChatReq, depth int) (*api.
 
 func (b *Bot) NormalChat(ctx context.Context, question string) (*api.ChatResp, error) {
 	log := wlog.ByCtx(ctx, "normal_chat")
-	msg := b.MakeUserMessage(question)
-	req := b.EnqueueHistory(msg).CreateRequestFromHistory()
+	b.chatHistory.Enqueue(b.MakeUserMessage(question))
+	req := b.CreateRequestFromHistory()
 	got, err := b.NormalReq(ctx, req, 0)
 	if err != nil {
 		log.WithError(err).Error("normal chat failed")
@@ -153,9 +153,8 @@ func (b *Bot) NormalChat(ctx context.Context, question string) (*api.ChatResp, e
 
 func (b *Bot) StreamChat(ctx context.Context, question string, handle func(resp *api.ChatResp)) error {
 	log := wlog.ByCtx(ctx, "stream_chat")
-
-	msg := b.MakeUserMessage(question)
-	req := b.EnqueueHistory(msg).CreateRequestFromHistory()
+	b.chatHistory.Enqueue(b.MakeUserMessage(question))
+	req := b.CreateRequestFromHistory()
 
 	log.Info("| REQ >>> %s", req2Str(req))
 
