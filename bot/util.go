@@ -28,3 +28,11 @@ func Resp2Str(resp *api.ChatResp) string {
 	}
 	return sb.String()
 }
+
+func RespMsg2Str(resp *api.ChatResp) string {
+	sb := strings.Builder{}
+	for _, c := range resp.Choices {
+		sb.WriteString(fmt.Sprintf("%s\n", c.Message.Content))
+	}
+	return sb.String()
+}

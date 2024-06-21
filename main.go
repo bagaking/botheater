@@ -8,8 +8,9 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/bagaking/botheater/history"
 	"os"
+
+	"github.com/bagaking/botheater/history"
 
 	"github.com/bagaking/goulp/jsonex"
 
@@ -50,6 +51,10 @@ func main() {
 	// TestContinuousChat(ctx, b)
 	// TestStreamChat(ctx, b, req)
 
+	h := history.NewHistory()
+	MultiAgentChat(ctx, h, b, "阅读当前目录下的关键代码内容后，找到和处理 req.Messages & b history 有关的代码，并提取出一个队列来对其进行优化。给我这个队列的代码")
+	MultiAgentChat(ctx, h, b, "总结之前聊天里，你的观点, 以及用于佐证的代码") //
+	MultiAgentChat(ctx, h, b, "针对这些代码进行改写，使其更优雅，要注意不要重复造轮子")
 }
 
 func TestNormalChat(ctx context.Context, b *bot.Bot, question string) {
@@ -61,6 +66,17 @@ func TestNormalChat(ctx context.Context, b *bot.Bot, question string) {
 	}
 
 	log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", bot.Resp2Str(resp))
+}
+
+func MultiAgentChat(ctx context.Context, h *history.History, b *bot.Bot, question string) {
+	log := wlog.ByCtx(ctx, "TestNormalChat")
+	resp, err := b.NormalChat(ctx, h, question)
+	if err != nil {
+		log.WithError(err).Errorf("chat failed")
+	}
+
+	log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", bot.Resp2Str(resp))
+	h.EnqueueAssistantMsg(bot.RespMsg2Str(resp))
 }
 
 func TestContinuousChat(ctx context.Context, b *bot.Bot) {

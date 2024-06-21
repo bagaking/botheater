@@ -72,13 +72,6 @@ func (b *Bot) MakeSystemMessage() *api.Message {
 	return b.Prompt.BuildSystemMessage(b.tm)
 }
 
-func (b *Bot) MakeUserMessage(question string) *api.Message {
-	return &api.Message{
-		Content: question,
-		Role:    api.ChatRoleUser,
-	}
-}
-
 func (b *Bot) CreateRequestFromHistory(h *history.History) *api.ChatReq {
 	req := &api.ChatReq{
 		Messages: b.CreateMessagesFromHistory(h),
@@ -152,18 +145,19 @@ func (b *Bot) TryHandleFunctionReq(ctx context.Context, h *history.History, req 
 func (b *Bot) NormalChat(ctx context.Context, h *history.History, question string) (*api.ChatResp, error) {
 	log := wlog.ByCtx(ctx, "normal_chat")
 
-	h.Enqueue(b.MakeUserMessage(question))
+	h.EnqueueUserMsg(question)
 	req := b.CreateRequestFromHistory(h)
 	got, err := b.NormalReq(ctx, h, req, 0)
 	if err != nil {
 		log.WithError(err).Error("normal chat failed")
 	}
+
 	return got, nil
 }
 
 func (b *Bot) StreamChat(ctx context.Context, h *history.History, question string, handle func(resp *api.ChatResp)) error {
 	log := wlog.ByCtx(ctx, "stream_chat")
-	h.Enqueue(b.MakeUserMessage(question))
+	h.EnqueueUserMsg(question)
 	req := b.CreateRequestFromHistory(h)
 
 	log.Info("| REQ >>> %s", Req2Str(req))
