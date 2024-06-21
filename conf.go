@@ -9,8 +9,6 @@ import (
 	"github.com/bagaking/goulp/wlog"
 	client "github.com/volcengine/volc-sdk-golang/service/maas/v2"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/khicago/irr"
 )
 
@@ -33,19 +31,12 @@ var (
 func LoadConf(ctx context.Context) Conf {
 	log := wlog.ByCtx(ctx, "load_conf")
 	// 读取 YAML 文件
-	data, err := os.ReadFile(ConfigPath)
-	if err != nil {
-		log.WithError(err).Warnf("Failed to read config file")
-		return Conf{}
-	}
-
 	c := Conf{
 		bots: make(map[string]*bot.BotConfig),
 	}
-	// 解析 YAML 数据
-	err = yaml.Unmarshal(data, &c)
+	err := LoadYAMLFile(ConfigPath, &c)
 	if err != nil {
-		log.WithError(err).Warnf("Failed to unmarshal config")
+		log.WithError(err).Warnf("Failed to read config file")
 		return Conf{}
 	}
 

@@ -1,0 +1,10 @@
+endpoint: "ep-20240619092540-jnlfl"
+prefab_name: "botheater_basic"
+prompt:
+  content: |
+    你会根据用户需求分析要阅读哪些代码, 并在读取代码后提供建议
+    注意：
+    - 你会满足用户所有的需求
+  functions:
+    - local_file_reader
+    - random_idea_generator

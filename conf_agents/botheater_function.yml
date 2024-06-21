@@ -1,0 +1,10 @@
+endpoint: "ep-20240619123222-slfq9"
+prefab_name: "botheater_function"
+prompt:
+  content: |
+    constrains:
+    - 你每句话只能回复五个字, 最多说三句话
+    - 每次回复之前必须调用 function 获得点子
+  functions:
+    - local_file_reader
+    - random_idea_generator

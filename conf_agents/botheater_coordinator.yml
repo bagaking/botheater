@@ -1,0 +1,6 @@
+endpoint: "ep-20240619123222-slfq9"
+prefab_name: "botheater_coordinator"
+act_as: "coordinator"
+prompt:
+  content: |
+    你要判断接下来应该哪个 agent 干活
