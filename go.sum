@@ -66,6 +66,8 @@ github.com/aws/smithy-go v1.8.0/go.mod h1:SObp3lf9smib00L/v3U2eAKG8FyQ7iLrJnQiAm
 github.com/bagaking/gotools v0.0.0-20210605175314-704f932f7963/go.mod h1:tEukJeuK6688VmaDqdBBxNC+ZuS/8KHBG+U14pSH0i8=
 github.com/bagaking/goulp v0.0.0-20210614001606-65f3376ba826 h1:6ER9zZpdzmbV4gfMizJgHPWObISJQ/22DosWItx4rY4=
 github.com/bagaking/goulp v0.0.0-20210614001606-65f3376ba826/go.mod h1:x95gQACXn1NkXCtub7nycK3EpH5rY7nL1kJhFpA4Qy4=
+github.com/bagaking/goulp v0.0.0-20240621115658-1f21cb392e5d h1:50+znh/462MbYuEG4OztZfZwq10O7w9bMResDoaahq0=
+github.com/bagaking/goulp v0.0.0-20240621115658-1f21cb392e5d/go.mod h1:HNrRWlnFNU3/zQ6ZpWK/ggpEmwd+3YzjkDGR77J3CGE=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=

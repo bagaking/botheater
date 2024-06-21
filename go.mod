@@ -3,7 +3,7 @@ module github.com/bagaking/botheater
 go 1.22.3
 
 require (
-	github.com/bagaking/goulp v0.0.0-20210614001606-65f3376ba826
+	github.com/bagaking/goulp v0.0.0-20240621115658-1f21cb392e5d
 	github.com/khicago/got v0.0.0-20240520140129-635733602f45
 	github.com/khicago/irr v0.0.0-20240309052027-df085c2216f6
 	github.com/sirupsen/logrus v1.9.3

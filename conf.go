@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/bagaking/goulp/yaml"
 	"os"
 
 	"github.com/bagaking/botheater/bot"
@@ -34,7 +35,7 @@ func LoadConf(ctx context.Context) Conf {
 	c := Conf{
 		bots: make(map[string]*bot.BotConfig),
 	}
-	err := LoadYAMLFile(ConfigPath, &c)
+	err := yaml.LoadYAMLFile(ConfigPath, &c)
 	if err != nil {
 		log.WithError(err).Warnf("Failed to read config file")
 		return Conf{}
