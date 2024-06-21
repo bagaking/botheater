@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/bagaking/botheater/tool"
+	"github.com/bagaking/botheater/call/tool"
 )
 
 type (

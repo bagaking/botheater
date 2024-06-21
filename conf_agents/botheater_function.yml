@@ -10,3 +10,5 @@ prompt:
   functions:
     - local_file_reader
     - random_idea_generator
+    - google_searcher
+    - browser

@@ -37,6 +37,26 @@ func (q *Queue[T]) Peek() (T, bool) {
 	return q.Items[0], true
 }
 
+// PopTail 弹出队尾
+func (q *Queue[T]) PopTail() (T, bool) {
+	if len(q.Items) == 0 {
+		var zero T
+		return zero, false
+	}
+	item := q.Items[q.Len()-1]
+	q.Items = q.Items[:q.Len()-1]
+	return item, true
+}
+
+// PeekTail 查看队尾元素但不出队
+func (q *Queue[T]) PeekTail() (T, bool) {
+	if len(q.Items) == 0 {
+		var zero T
+		return zero, false
+	}
+	return q.Items[q.Len()-1], true
+}
+
 // Len 返回队列长度
 func (q *Queue[T]) Len() int {
 	return len(q.Items)

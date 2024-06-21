@@ -17,7 +17,7 @@ func Req2Str(req *api.ChatReq) string {
 }
 
 func Msg2Str(ind int, msg *api.Message) string {
-	return fmt.Sprintf("--- %d. [%s] --- \n%s\n--- %d. fin ---\n\n", ind, msg.Role, msg.Content, ind)
+	return fmt.Sprintf("--- %d. [%s-%s] --- \n%v\n--- %d. fin ---\n\n", ind, msg.Role, msg.Name, msg.Content, ind)
 }
 
 func Resp2Str(resp *api.ChatResp) string {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	tool "github.com/bagaking/botheater/call/tool"
 	"github.com/bagaking/goulp/jsonex"
 	"github.com/bagaking/goulp/wlog"
 
@@ -13,7 +14,6 @@ import (
 	client "github.com/volcengine/volc-sdk-golang/service/maas/v2"
 
 	"github.com/bagaking/botheater/history"
-	"github.com/bagaking/botheater/tool"
 )
 
 type (
@@ -73,7 +73,8 @@ func (b *Bot) CreateMessagesFromHistory(ctx context.Context, h *history.History)
 
 func (b *Bot) NormalReq(ctx context.Context, h *history.History, req *api.ChatReq, depth int) (*api.ChatResp, error) {
 	log, ctx := wlog.ByCtxAndCache(ctx, "normal_req")
-	log.Infof("| REQ >>> %s", Req2Str(req))
+	strReq := Req2Str(req)
+	log.Infof("| REQ >>> (len:%d) %s", len(strReq), strReq)
 
 	resp, status, err := b.maas.Chat(b.Endpoint, req)
 	if err != nil {
@@ -84,9 +85,14 @@ func (b *Bot) NormalReq(ctx context.Context, h *history.History, req *api.ChatRe
 		return nil, irr.Wrap(err, "normal req failed, depth= %d", depth)
 	}
 
-	log.Infof("| RESP <<< %s", jsonex.MustMarshalToString(resp))
+	dataResp := jsonex.MustMarshalToString(resp)
+	log.Infof("| RESP <<< (len:%d) %s", len(dataResp), dataResp)
 
-	return b.TryHandleFunctionReq(ctx, h, req, resp, depth)
+	resp, err = b.TryHandleFunctionReq(ctx, h, req, resp, depth)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 // TryHandleFunctionReq 如果有函数调用，则执行直到超出限制，否则返回结果
@@ -105,11 +111,11 @@ func (b *Bot) TryHandleFunctionReq(ctx context.Context, h *history.History, req 
 		break
 	}
 
-	if !tool.HasFunctionCall(got) {
+	if !tool.Caller.HasCall(got) {
 		return resp, nil
 	}
 
-	funcName, paramValues, err := tool.ParseFunctionCall(ctx, got)
+	funcName, paramValues, err := tool.Caller.ParseCall(ctx, got)
 	callResult := ""
 	if err != nil {
 		log.WithError(err).Warnf("failed to parse function call")
@@ -128,15 +134,17 @@ func (b *Bot) TryHandleFunctionReq(ctx context.Context, h *history.History, req 
 }
 
 func (b *Bot) NormalChat(ctx context.Context, h *history.History, question string) (*api.ChatResp, error) {
-	log := wlog.ByCtx(ctx, "normal_chat")
-
 	h.EnqueueUserMsg(question)
+	return b.HistoryChat(ctx, h)
+}
+
+func (b *Bot) HistoryChat(ctx context.Context, h *history.History) (*api.ChatResp, error) {
+	log := wlog.ByCtx(ctx, "history_chat")
 	req := b.CreateRequestFromHistory(ctx, h)
 	got, err := b.NormalReq(ctx, h, req, 0)
 	if err != nil {
 		log.WithError(err).Error("normal chat failed")
 	}
-
 	return got, nil
 }
 

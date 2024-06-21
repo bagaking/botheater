@@ -1,8 +1,7 @@
 package history
 
 import (
-	"github.com/bagaking/botheater/tool"
-
+	"github.com/bagaking/botheater/call/tool"
 	"github.com/khicago/got/util/typer"
 
 	"github.com/volcengine/volc-sdk-golang/service/maas/models/api/v2"
@@ -12,7 +11,7 @@ import (
 func PushFunctionCallMSG(msgs []*api.Message, callResult string) []*api.Message {
 	mCall := &api.Message{
 		Content: callResult,
-		Name:    tool.CallPrefix,
+		Name:    tool.Caller.Prefix,
 		Role:    api.ChatRoleAssistant,
 	}
 
@@ -21,7 +20,7 @@ func PushFunctionCallMSG(msgs []*api.Message, callResult string) []*api.Message 
 	}
 
 	// todo: merge 规则可以调整
-	for l := len(msgs); len(msgs) > 0 && msgs[l-1].Name == tool.CallPrefix; l = len(msgs) { // merge calls
+	for l := len(msgs); len(msgs) > 0 && msgs[l-1].Name == tool.Caller.Prefix; l = len(msgs) { // merge calls
 		if str, ok := msgs[l-1].Content.(string); ok {
 			mCall.Content = str + "\n\n" + callResult
 		}

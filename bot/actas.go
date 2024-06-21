@@ -3,8 +3,11 @@ package bot
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/khicago/got/util/typer"
+
+	"github.com/bagaking/botheater/call"
 )
 
 type ActAs string
@@ -12,7 +15,11 @@ type ActAs string
 const (
 	ActAsCoordinator ActAs = "coordinator"
 	ActAsEvaluator   ActAs = "evaluator"
+
+	CallPrefix = "agent_call::"
 )
+
+var Caller = &call.Caller{Prefix: CallPrefix, Regex: regexp.MustCompile(`agent_call::(\w+)\((.*?)\)`)}
 
 // InitAllActAs 初始化所有 ActAs
 func InitAllActAs(ctx context.Context, allBots ...*Bot) {
@@ -33,8 +40,8 @@ const (
 	ActAsTellStart = `# 现在支持了以下 Agents
 `
 	ActAsTellTail = `
-当且仅当要使用 agents 时，回复 agents_call::name，比如：
-agents_call::botheater_basic
+当且仅当要使用 agent 时，回复 agent_call::name(问题)，比如：
+` + CallPrefix + `botheater_basic("接下来查询今天的交易信息")
 注意:
 - 要调用 agent 时不要回复除调用 agent 以外的内容
 - 如果不需要调用 agent, 你的回复一定不要包含这种格式

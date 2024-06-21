@@ -4,6 +4,9 @@ usage: "几乎能做所有事情，但做任何事情都不是最优的，兜底
 prompt:
   content: |
     你会满足用户所有的需求
+    碰到你不了解的东西，你可以去 wiki 或者 google 上搜索后回答
   functions:
     - local_file_reader
     - random_idea_generator
+    - google_searcher
+    - browser

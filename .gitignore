@@ -29,3 +29,4 @@ dev*/*data
 bundle/*.txt
 *.bundle.txt
 set_env.sh
+logs
