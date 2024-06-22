@@ -1,98 +1,108 @@
-# BotHeater
+# Botheater
 
-BotHeater 是一个基于 Volcengine MaaS 服务的聊天机器人框架，支持多种工具的集成和调用。通过定义和注册工具，BotHeater 可以在聊天过程中动态调用这些工具来完成特定任务。
+Botheater 是一个多功能的智能代理系统，旨在通过协调多个代理（Agents）来完成复杂的任务。每个代理都有特定的职责和功能，通过相互协作，能够高效地解决各种问题。
 
-## 目录
+## 功能特性
 
-- [功能介绍](#功能介绍)
-- [安装](#安装)
-- [使用方法](#使用方法)
-- [示例](#示例)
-- [贡献](#贡献)
-- [许可证](#许可证)
+### 多代理协调机制
 
-## 功能介绍
+Botheater 采用了先进的多代理协调机制，通过 `Coordinator` 代理来调度和管理其他功能代理。`Coordinator` 代理负责分析任务并分配给最合适的功能代理，从而确保任务高效完成。
 
-- **工具管理**：支持注册和管理多个工具。
-- **函数调用解析**：解析聊天内容中的函数调用并执行相应的工具。
-- **聊天历史管理**：维护聊天历史，支持连续对话。
-- **多种工具支持**：包括文件读取器和随机想法生成器等。
+### Driver 机制
 
-## 安装
+Botheater 支持多种 Driver，以适应不同的底层实现需求。系统设计允许轻松扩展以支持其他服务。Driver 机制使得 Botheater 能够灵活地适应不同的运行环境和需求。
 
-1. 克隆仓库：
+当前实现包括对火山引擎 MaaS 服务（豆包大模型）的支持，设置环境变量 `VOLC_ACCESSKEY` 和 `VOLC_SECRETKEY` 和 conf 配置，即可访问
+
+### 本地 Tools 机制
+
+Botheater 的 `NormalReq` 方法支持递归调用，能够处理复杂的函数调用链。
+
+单个 agent 代理可以在多轮对话中逐步解决复杂问题，确保任务的最终完成。
+
+同时 本地工具（Tools）机制，支持多种功能扩展。每个工具都实现了 `ITool` 接口，可以独立执行特定任务。
+
+当前实现的工具包括：
+
+- **文件读取工具**：读取本地文件和目录内容。
+- **网络搜索工具**：通过 Google 搜索引擎进行信息检索。
+- **网页浏览工具**：访问指定的 URL 并返回页面内容。
+- ..
+
+### History 机制
+
+Botheater 采用了 History 机制来管理对话历史和上下文信息。
+
+每个代理在处理任务时都会参考历史记录，从而保持对话的一致性和连贯性。
+
+History 机制确保了代理在多轮对话中的注意力管理，使其能够更好地理解和响应用户需求。
+
+## 安装与运行
+
+> 环境要求 Go 1.18+
+
+1. 克隆仓库
 
 ```sh
     git clone https://github.com/yourusername/botheater.git
     cd botheater
 ```
 
-2. 安装依赖：
+2. 安装依赖
 
 ```sh
-    go get -u github.com/volcengine/volc-sdk-golang
+    go mod tidy
 ```
 
-3. 设置环境变量：
+3. 运行项目
 
 ```sh
-    export VOLC_ACCESSKEY=XXXXX
-    export VOLC_SECRETKEY=YYYYY
+    VOLC_ACCESSKEY=XXXXX VOLC_SECRETKEY=YYYYY go run main.go
 ```
 
 ## 使用方法
 
-1. 运行主程序：
+启动项目后，可以通过命令行与 Botheater 进行交互。以下是一些示例命令：
+
+- 读取当前目录下的文件内容：
 
 ```sh
-    go run main.go
+    阅读当前目录下的关键代码内容
 ```
 
-2. 你可以通过修改 `main.go` 中的 `TestNormalChat` 或 `TestContinuousChat` 函数来测试不同的聊天功能。
+- 搜索比特币最近的行情：
 
-## 示例
-
-### 注册工具
-
-在 `main.go` 中注册工具：
-
-```go
-tm.RegisterTool(&tools.LocalFileReader{})
-tm.RegisterTool(&tools.RandomIdeaGenerator{})
+```sh
+    帮我找到比特币最近的行情
 ```
 
-### 执行聊天
+### 多代理协作示例
 
-在 `main.go` 中执行聊天：
+Botheater 支持多代理协作，通过 `Coordinator` 代理来协调其他代理完成复杂任务。例如：
 
-```go
-TestNormalChat(ctx, bot, "给我一个好点子")
+```sh
+接下来我要对本地仓库代码做优化，准备好了吗？
 ```
 
-### 工具示例
+提供一个多代理协作的示例代码，展示如何使用 `Coordinator` 代理来协调其他代理完成任务，详见 `MultiAgentChat`
 
-#### LocalFileReader
+## 贡献指南
 
-- **名称**：local_file_reader
-- **用法**：获取访问地址对应的文件内容，如果地址是一个目录，则返回目录中的文件列表
-- **示例**：
-    - `local_file_reader(.) // 获得根目录下所有文件`
-    - `local_file_reader(./README.md) // 读取 README.md 中的内容`
+欢迎开发者参与 Botheater 的开发与维护。请遵循以下步骤：
 
-#### RandomIdeaGenerator
-
-- **名称**：random_idea_generator
-- **用法**：调用一次，获得一个点子
-- **示例**：
-    - `random_idea_generator()`
-
-## 贡献
-
-欢迎贡献代码！请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 了解更多信息。
+1. Fork 本仓库
+2. 创建你的分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交你的修改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开一个 Pull Request
 
 ## 许可证
 
-本项目基于 MIT 许可证开源，详细信息请参阅 [LICENSE](LICENSE) 文件。
+本项目采用 MIT 许可证，详情请参阅 [LICENSE](./LICENSE) 文件。
+
+## 联系我们
+
+如果你有任何问题或建议，请通过 [issue tracker](https://github.com/yourusername/botheater/issues) 与我们联系。
 
 ## 手账
 
