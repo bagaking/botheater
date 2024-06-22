@@ -2,6 +2,12 @@ package bot
 
 import (
 	"context"
+	"encoding/base64"
+
+	"github.com/sirupsen/logrus"
+
+	"github.com/bagaking/botheater/utils"
+	"github.com/google/uuid"
 
 	"github.com/bagaking/botheater/driver"
 	"github.com/bagaking/goulp/jsonex"
@@ -28,6 +34,7 @@ type (
 	}
 
 	Bot struct {
+		UUID string `yaml:"uuid" json:"uuid"`
 		*Config
 
 		driver driver.Driver
@@ -45,15 +52,25 @@ func New(conf Config, driver driver.Driver, tm *tool.Manager) *Bot {
 		driver:       driver,
 		tm:           tm,
 		localHistory: history.NewHistory(),
+		UUID:         base64.StdEncoding.EncodeToString([]byte(uuid.New().String())),
 	}
 	return bot
 }
 
+func (b *Bot) Logger(ctx context.Context, funcName string) (*logrus.Entry, context.Context) {
+	ctx = utils.InjectAgentLogKey(ctx, b.PrefabName)
+	ctx = utils.InjectAgentID(ctx, b.UUID)
+	log, ctx := wlog.ByCtxAndCache(ctx, funcName)
+	return log.Entry, ctx
+}
+
 func (b *Bot) MakeSystemMessage(ctx context.Context) *history.Message {
+	ctx = utils.InjectAgentLogKey(ctx, b.PrefabName)
 	return b.Prompt.BuildSystemMessage(ctx, b.tm).AppendContent(b.ActAsContext)
 }
 
 func (b *Bot) Messages(ctx context.Context, globalHistory *history.History) history.Messages {
+	ctx = utils.InjectAgentLogKey(ctx, b.PrefabName)
 	// 创建这次交互的上下文，依次是 prompt、全局 history、本地 history
 	messages := make([]*history.Message, 0, globalHistory.Len()+1)
 	messages = append(messages, b.MakeSystemMessage(ctx))
@@ -64,7 +81,7 @@ func (b *Bot) Messages(ctx context.Context, globalHistory *history.History) hist
 
 // NormalReq 递归结构，会处理函数调用，不会改变 History
 func (b *Bot) NormalReq(ctx context.Context, staticMessages history.Messages, tempMessages *history.Messages, depth int) (string, error) {
-	log, ctx := wlog.ByCtxAndCache(ctx, "normal_req")
+	log, ctx := b.Logger(ctx, "normal_req")
 
 	if tempMessages == nil {
 		tl := make(history.Messages, 0)
@@ -102,11 +119,11 @@ func (b *Bot) NormalReq(ctx context.Context, staticMessages history.Messages, te
 // Question - 只是一个和 bot 聊天的快捷方式
 func (b *Bot) Question(ctx context.Context, h *history.History, question string) (string, error) {
 	h.EnqueueUserMsg(question)
-	return b.ChatWithHistory(ctx, h)
+	return b.SendChat(ctx, h)
 }
 
-func (b *Bot) ChatWithHistory(ctx context.Context, globalHistory *history.History) (string, error) {
-	log := wlog.ByCtx(ctx, "history_chat")
+func (b *Bot) SendChat(ctx context.Context, globalHistory *history.History) (string, error) {
+	log, ctx := b.Logger(ctx, "send_chat")
 	// 创建临时聊天队列
 	messages := b.Messages(ctx, globalHistory)
 	tempMessages := make(history.Messages, 0) // 要保存结果就在调用前创建，不保存的话就是不保留 function 调用过程的模式

@@ -16,6 +16,7 @@ import (
 	"github.com/bagaking/botheater/call/tool"
 	"github.com/bagaking/botheater/history"
 	"github.com/bagaking/botheater/tools"
+	"github.com/bagaking/botheater/utils"
 )
 
 const (
@@ -26,10 +27,11 @@ const (
 var tm = tool.NewToolManager()
 
 func main() {
-	mustInitLogger()
+	utils.MustInitLogger()
 	logrus.SetLevel(logrus.TraceLevel)
 
-	log, ctx := wlog.ByCtxAndCache(context.Background())
+	ctx := context.Background()
+	log := wlog.ByCtx(context.Background())
 
 	tm.RegisterTool(&tools.LocalFileReader{})
 	tm.RegisterTool(&tools.RandomIdeaGenerator{})
@@ -87,7 +89,9 @@ func main() {
 }
 
 func MultiAgentChat(ctx context.Context, h *history.History, question string, bots ...*bot.Bot) {
-	log := wlog.ByCtx(ctx, "MultiAgentChat").WithField("mode", "auto")
+	l2, ctx := wlog.ByCtxAndRemoveCache(ctx, "MultiAgentChat")
+	log := l2.WithField("mode", "auto")
+
 	if len(bots) == 0 {
 		return
 	}
@@ -113,7 +117,7 @@ func MultiAgentChat(ctx context.Context, h *history.History, question string, bo
 			return
 		}
 		log.Infof("enter new round= %d", i)
-		content, err := bCur.ChatWithHistory(ctx, h)
+		content, err := bCur.SendChat(ctx, h)
 		if err != nil {
 			log.WithError(err).Errorf("chat failed")
 		}
