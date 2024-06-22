@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/bagaking/goulp/jsonex"
+
 	"github.com/khicago/irr"
 )
 
@@ -41,5 +42,12 @@ func (result *Result) ToPrompt() string {
 		}
 		return fmt.Sprintf(ct.Prefix+"%s(%s) 调用错误!\n具体错误是: %v", result.FunctionName, strings.Join(result.ParamValues, ","), result.Error)
 	}
-	return fmt.Sprintf(ct.Prefix+"%s(%s) 调用成功!\n结果为: %s", result.FunctionName, strings.Join(result.ParamValues, ","), jsonex.MustMarshalToString(result.Response))
+	strResp := ""
+	if str, ok := result.Response.(string); ok {
+		strResp = str
+	} else {
+		jsonex.MustMarshalToString(result.Response)
+	}
+
+	return fmt.Sprintf(ct.Prefix+"%s(%s) 调用成功!\n结果为: %s", result.FunctionName, strings.Join(result.ParamValues, ","), strResp)
 }

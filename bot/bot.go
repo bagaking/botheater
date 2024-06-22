@@ -95,6 +95,7 @@ func (b *Bot) NormalReq(ctx context.Context, staticMessages history.Messages, te
 
 	// 在临时栈中操作
 	*tempMessages = history.PushFunctionCallMSG(*tempMessages, callResult)
+	log.Infof("--> call %s(%v) result %s", funcName, paramValues, callResult)
 	return b.NormalReq(ctx, staticMessages, tempMessages, depth+1)
 }
 

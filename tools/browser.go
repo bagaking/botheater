@@ -73,15 +73,18 @@ func (b *Browser) Execute(params map[string]string) (any, error) {
 	doc.Find("body").Each(func(i int, s *goquery.Selection) {
 		s.Find("a").Each(func(j int, a *goquery.Selection) {
 			text := strings.TrimSpace(a.Text())
-			if text != "" {
-				return
-			}
 			href, exists := a.Attr("href")
 			if exists {
 				decodedHref, _ := url.QueryUnescape(href)
 				decodedHref, _ = strconv.Unquote(`"` + decodedHref + `"`)
+				if text == "" {
+					text = decodedHref
+				}
 				result.WriteString(fmt.Sprintf("[%s](%s)\n", text, decodedHref))
 			} else {
+				if text == "" {
+					text = "link"
+				}
 				result.WriteString(text)
 				result.WriteRune('\n')
 			}
@@ -98,7 +101,7 @@ func (b *Browser) Execute(params map[string]string) (any, error) {
 
 	cleanedResult := strings.TrimSpace(result.String())
 	cleanedResult = removeExtraNewlines(cleanedResult)
-	return result.String(), nil
+	return cleanedResult, nil
 }
 
 func removeExtraNewlines(input string) string {

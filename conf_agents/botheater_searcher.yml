@@ -10,7 +10,7 @@ prompt:
     - 你的回答必须包含内容和相关的引用
     Example：
     我找到以下相关内容
-    - [内容1](http....) 里头提到了 ....
+    - [内容1](http....) 里提到了 ....
   functions:
     - google_searcher
     - browser

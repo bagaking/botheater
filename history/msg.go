@@ -71,8 +71,9 @@ func PushFunctionCallMSG(msgs []*Message, callResult string) []*Message {
 		msgs = msgs[:len(msgs)-1]
 	}
 
+	// 如果前一条消息也是 FunctionCall, 那么就把结果 Merge
 	// todo: merge 规则可以调整
-	for l := len(msgs); len(msgs) > 0 && msgs[l-1].Identity == tool.Caller.Prefix; l = len(msgs) { // merge calls
+	for l := len(msgs); l > 0 && msgs[l-1].Identity == tool.Caller.Prefix; l = len(msgs) { // merge calls
 		mCall.Content = msgs[l-1].Content + "\n\n" + callResult
 		msgs = msgs[:l-1]
 	}
