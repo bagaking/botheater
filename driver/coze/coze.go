@@ -45,11 +45,19 @@ func (d *Driver) Chat(ctx context.Context, messages []*history.Message) (got str
 		return "", irr.Wrap(err, "chat failed")
 	}
 
+	// todo: deal with unexpected situations
+	if resp.Error != nil {
+		return "", irr.Wrap(resp.Error, "response failed")
+	}
+
 	got = RespMsg2Str(resp)
+	if got == "" { // 空白的情况抛出错误，由上游兜底
+		return "", irr.Error("got empty content")
+		// got = "got empty message，fallback to all:\n" + jsonex.MustMarshalToString(resp)
+	}
 
 	d.debugFinish(log, got, messages)
 
-	// todo: deal with unexpected situations
 	return got, nil
 }
 

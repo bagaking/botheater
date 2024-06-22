@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"encoding/base64"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -93,8 +94,14 @@ func (b *Bot) NormalReq(ctx context.Context, staticMessages history.Messages, te
 		return "", irr.Wrap(err, "normal req failed, depth= %d", depth)
 	}
 
+	got = strings.TrimSpace(got)
+	if got == "" {
+		return b.PrefabName + " 开小差了，请重试", nil
+	}
+
 	// 如果没有后续的函数调用就直接返回
 	if !tool.Caller.HasCall(got) {
+		log.Infof("-- 在 depth= %d 的调用中，agent 不调用任何 Function 直接给出响应：`%s`", depth, got)
 		return got, nil
 	}
 
