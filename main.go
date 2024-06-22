@@ -26,8 +26,6 @@ import (
 )
 
 const (
-	BotNameBasic    = "botheater_basic"
-	BotNameFunction = "botheater_function"
 	MaxRound        = 100000
 	ContinueMessage = "达到目标了吗? 接下来该做什么？"
 )
@@ -46,10 +44,9 @@ func main() {
 	tm.RegisterTool(&tools.Browser{})
 
 	conf := LoadConf(ctx)
-	b, err := conf.NewBot(initClient(ctx), BotNameBasic, tm)
-	// b, err := conf.NewBot(initClient(ctx), BotNameFunction)
+	botBasic, err := conf.NewBot(initClient(ctx), "botheater_basic", tm)
 	if err != nil {
-		log.WithError(err).Fatalf("create b failed")
+		log.WithError(err).Fatalf("create botBasic failed")
 	}
 
 	botFileReader, err := conf.NewBot(initClient(ctx), "botheater_filereader", tm)
@@ -62,26 +59,37 @@ func main() {
 		log.WithError(err).Fatalf("create botheater_coordinator failed")
 	}
 
-	bot.InitAllActAs(ctx, botCoordinator, botFileReader, b)
+	botSearcher, err := conf.NewBot(initClient(ctx), "botheater_searcher", tm)
+	if err != nil {
+		log.WithError(err).Fatalf("create botheater_searcher failed")
+	}
 
-	log.Info(b.String())
+	bots := []*bot.Bot{
+		botCoordinator, botFileReader, botBasic, botSearcher,
+	}
 
-	// TestNormalChat(ctx, b, "给我一个好点子")
-	// TestNormalChat(ctx, b, "阅读当前目录下的关键代码内容后，找到和处理 req.Messages & b history 有关的代码，并提取出一个队列来对其进行优化。给我这个队列的代码")
-	// TestContinuousChat(ctx, b)
-	// TestStreamChat(ctx, b, req)
+	bot.InitAllActAs(ctx, bots...)
+
+	log.Info(botBasic.String())
+
+	// TestNormalChat(ctx, botBasic, "给我一个好点子")
+	// TestNormalChat(ctx, botBasic, "阅读当前目录下的关键代码内容后，找到和处理 req.Messages & botBasic history 有关的代码，并提取出一个队列来对其进行优化。给我这个队列的代码")
+	// TestContinuousChat(ctx, botBasic)
+	// TestStreamChat(ctx, botBasic, req)
 
 	h := history.NewHistory()
 	// MultiAgentChat(ctx, h, "接下来我要对本地仓库代码做优化，准备好了吗？", botCoordinator) //
 
 	// MultiAgentChat(ctx, h,
-	//	"阅读当前目录下的关键代码内容后，找到和处理 req.Messages & b history 有关的代码，并提取出一个队列来对其进行优化。给我这个队列的代码",
-	//	botCoordinator, botFileReader, b)
+	//	"阅读当前目录下的关键代码内容后，找到和处理 req.Messages & botBasic history 有关的代码，并提取出一个队列来对其进行优化。给我这个队列的代码",
+	//	botCoordinator, botFileReader, botBasic)
 
-	// MultiAgentChat(ctx, h, "帮我找到比特币最近的行情", botCoordinator, botFileReader, b) // 搜索可能要优化
-	MultiAgentChat(ctx, h, "帮我总结什么是鸟狗式", botCoordinator, botFileReader, b)
+	// MultiAgentChat(ctx, h, "帮我找到比特币最近的行情", botCoordinator, botFileReader, botBasic) // 搜索可能要优化
+	//MultiAgentChat(ctx, h, "帮我总结什么是鸟狗式", bots...)
+
+	MultiAgentChat(ctx, h, "什么是vector_database", bots...)
 	// MultiAgentChat(ctx, h, "总结之前聊天里，你的观点, 以及用于佐证的代码", botCoordinator) //
-	// MultiAgentChat(ctx, h, "针对这些代码进行改写，使其更优雅，要注意不要重复造轮子", b)
+	// MultiAgentChat(ctx, h, "针对这些代码进行改写，使其更优雅，要注意不要重复造轮子", botBasic)
 }
 
 func TestNormalChat(ctx context.Context, b *bot.Bot, question string) {

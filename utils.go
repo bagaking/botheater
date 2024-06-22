@@ -11,6 +11,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+// todo: 每个 agent 输出到不同的文件
 func mustInitLogger() {
 	// 配置一个lumberjack.Logger
 	logRoller := &lumberjack.Logger{

@@ -30,7 +30,10 @@ func InitAllActAs(ctx context.Context, allBots ...*Bot) {
 		b := allBots[i]
 		// wlog.ByCtx(ctx, "InitAllActAs").Infof("bot %d.%s act_as= %s, conf=%v", i, b.PrefabName, b.AckAs, b.Config)
 		if b.AckAs == ActAsCoordinator {
-			b.InjectCoordinatorPrompt(configs)
+
+			b.InjectCoordinatorPrompt(typer.SliceFilter(configs, func(c *Config) bool {
+				return c.PrefabName != b.PrefabName
+			})) // 不把自己放进去
 			// wlog.ByCtx(ctx, "InitAllActAs").Infof("find coordinator at %s, with context %s", b.Config.PrefabName, b.ActAsContext)
 		}
 	}

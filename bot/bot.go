@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	tool "github.com/bagaking/botheater/call/tool"
 	"github.com/bagaking/goulp/jsonex"
 	"github.com/bagaking/goulp/wlog"
 
+	"github.com/bagaking/botheater/call/tool"
 	"github.com/khicago/irr"
 
 	"github.com/volcengine/volc-sdk-golang/service/maas/models/api/v2"
@@ -36,6 +36,8 @@ type (
 
 		maas *client.MaaS
 		tm   *tool.Manager
+
+		localHistory *history.History
 	}
 )
 
@@ -58,17 +60,17 @@ func (b *Bot) MakeSystemMessage(ctx context.Context) *api.Message {
 }
 
 func (b *Bot) CreateRequestFromHistory(ctx context.Context, h *history.History) *api.ChatReq {
-	req := &api.ChatReq{
-		Messages: b.CreateMessagesFromHistory(ctx, h),
-	}
-	return req
-}
 
-func (b *Bot) CreateMessagesFromHistory(ctx context.Context, h *history.History) []*api.Message {
+	// 创建这次交互的上下文，依次是 prompt、全局 history、本地 history
 	messages := make([]*api.Message, 0, h.Len()+1)
 	messages = append(messages, b.MakeSystemMessage(ctx))
 	messages = append(messages, h.All()...)
-	return messages
+	messages = append(messages, b.localHistory.All()...)
+
+	req := &api.ChatReq{
+		Messages: messages,
+	}
+	return req
 }
 
 func (b *Bot) NormalReq(ctx context.Context, h *history.History, req *api.ChatReq, depth int) (*api.ChatResp, error) {
@@ -115,6 +117,7 @@ func (b *Bot) TryHandleFunctionReq(ctx context.Context, h *history.History, req 
 		return resp, nil
 	}
 
+	// todo: 处理一次有多个的情况
 	funcName, paramValues, err := tool.Caller.ParseCall(ctx, got)
 	callResult := ""
 	if err != nil {
