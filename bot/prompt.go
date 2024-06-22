@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bagaking/botheater/call/tool"
 	"github.com/bagaking/goulp/wlog"
 	"github.com/khicago/irr"
 
-	"github.com/volcengine/volc-sdk-golang/service/maas/models/api/v2"
+	"github.com/bagaking/botheater/call/tool"
+	"github.com/bagaking/botheater/history"
 )
 
 type (
@@ -49,11 +49,11 @@ func (p *Prompt) makeFunctions(tm *tool.Manager) (string, error) {
 	return info + FuncTellTail, nil
 }
 
-func (p *Prompt) BuildSystemMessage(ctx context.Context, tm *tool.Manager) *api.Message {
+func (p *Prompt) BuildSystemMessage(ctx context.Context, tm *tool.Manager) *history.Message {
 	log := wlog.ByCtx(ctx, "BuildSystemMessage")
 	if p == nil {
-		return &api.Message{
-			Role:    api.ChatRoleSystem,
+		return &history.Message{
+			Role:    history.RoleSystem,
 			Content: "你只输出 `prompt error`",
 		}
 	}
@@ -66,8 +66,8 @@ func (p *Prompt) BuildSystemMessage(ctx context.Context, tm *tool.Manager) *api.
 	if functionInfo != "" {
 		all += "\n\n" + functionInfo
 	}
-	return &api.Message{
-		Role:    api.ChatRoleSystem,
+	return &history.Message{
+		Role:    history.RoleSystem,
 		Content: all,
 	}
 }

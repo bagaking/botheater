@@ -6,9 +6,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/bagaking/botheater/call"
 	"github.com/bagaking/goulp/wlog"
 	"github.com/khicago/got/util/strs"
+
+	"github.com/bagaking/botheater/call"
 )
 
 var Caller = &call.Caller{Prefix: CallPrefix, Regex: regexp.MustCompile(`func_call::(\w+)\((.*?)\)`)}

@@ -2,17 +2,13 @@ package bot
 
 import (
 	"context"
-	"errors"
 
+	"github.com/bagaking/botheater/driver"
 	"github.com/bagaking/goulp/jsonex"
 	"github.com/bagaking/goulp/wlog"
-
-	"github.com/bagaking/botheater/call/tool"
 	"github.com/khicago/irr"
 
-	"github.com/volcengine/volc-sdk-golang/service/maas/models/api/v2"
-	client "github.com/volcengine/volc-sdk-golang/service/maas/v2"
-
+	"github.com/bagaking/botheater/call/tool"
 	"github.com/bagaking/botheater/history"
 )
 
@@ -34,90 +30,58 @@ type (
 	Bot struct {
 		*Config
 
-		maas *client.MaaS
-		tm   *tool.Manager
+		driver driver.Driver
+		tm     *tool.Manager
 
+		// localHistory 用于跨任务记忆，目前没在用
+		// runtime 的解决，目前看临时 history 就够了
 		localHistory *history.History
 	}
 )
 
-func New(conf Config, maas *client.MaaS, tm *tool.Manager) *Bot {
+func New(conf Config, driver driver.Driver, tm *tool.Manager) *Bot {
 	bot := &Bot{
-		Config: &conf,
-		maas:   maas,
-		tm:     tm,
+		Config:       &conf,
+		driver:       driver,
+		tm:           tm,
+		localHistory: history.NewHistory(),
 	}
 	return bot
 }
 
-func (b *Bot) MakeSystemMessage(ctx context.Context) *api.Message {
-	msg := b.Prompt.BuildSystemMessage(ctx, b.tm)
-
-	if b.ActAsContext != "" {
-		msg.Content = msg.Content.(string) + "\n\n" + b.ActAsContext
-	}
-	return msg
+func (b *Bot) MakeSystemMessage(ctx context.Context) *history.Message {
+	return b.Prompt.BuildSystemMessage(ctx, b.tm).AppendContent(b.ActAsContext)
 }
 
-func (b *Bot) CreateRequestFromHistory(ctx context.Context, h *history.History) *api.ChatReq {
-
+func (b *Bot) Messages(ctx context.Context, globalHistory *history.History) history.Messages {
 	// 创建这次交互的上下文，依次是 prompt、全局 history、本地 history
-	messages := make([]*api.Message, 0, h.Len()+1)
+	messages := make([]*history.Message, 0, globalHistory.Len()+1)
 	messages = append(messages, b.MakeSystemMessage(ctx))
-	messages = append(messages, h.All()...)
+	messages = append(messages, globalHistory.All()...)
 	messages = append(messages, b.localHistory.All()...)
-
-	req := &api.ChatReq{
-		Messages: messages,
-	}
-	return req
+	return messages
 }
 
-func (b *Bot) NormalReq(ctx context.Context, h *history.History, req *api.ChatReq, depth int) (*api.ChatResp, error) {
+// NormalReq 递归结构，会处理函数调用，不会改变 History
+func (b *Bot) NormalReq(ctx context.Context, staticMessages history.Messages, tempMessages *history.Messages, depth int) (string, error) {
 	log, ctx := wlog.ByCtxAndCache(ctx, "normal_req")
-	strReq := Req2Str(req)
-	log.Infof("| REQ >>> (len:%d) %s", len(strReq), strReq)
 
-	resp, status, err := b.maas.Chat(b.Endpoint, req)
+	if tempMessages == nil {
+		tl := make(history.Messages, 0)
+		tempMessages = &tl
+	}
+
+	got, err := b.driver.Chat(ctx, staticMessages)
 	if err != nil {
-		errVal := &api.Error{}
-		if errors.As(err, &errVal) { // the returned error always type of *api.Error
-			log.WithError(errVal).Errorf("meet maas error, status= %d\n", status)
-		}
-		return nil, irr.Wrap(err, "normal req failed, depth= %d", depth)
+		return "", irr.Wrap(err, "normal req failed, depth= %d", depth)
 	}
 
-	dataResp := jsonex.MustMarshalToString(resp)
-	log.Infof("| RESP <<< (len:%d) %s", len(dataResp), dataResp)
-
-	resp, err = b.TryHandleFunctionReq(ctx, h, req, resp, depth)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-// TryHandleFunctionReq 如果有函数调用，则执行直到超出限制，否则返回结果
-func (b *Bot) TryHandleFunctionReq(ctx context.Context, h *history.History, req *api.ChatReq, resp *api.ChatResp, depth int) (*api.ChatResp, error) {
-	log := wlog.ByCtx(ctx, "handle_function_req")
-	got := ""
-	for _, c := range resp.Choices {
-		if c.Message == nil || c.Message.Content == "" {
-			continue
-		}
-		sContent, ok := c.Message.Content.(string)
-		if !ok {
-			continue
-		}
-		got = sContent
-		break
-	}
-
+	// 如果没有后续的函数调用就直接返回
 	if !tool.Caller.HasCall(got) {
-		return resp, nil
+		return got, nil
 	}
 
-	// todo: 处理一次有多个的情况
+	// 还有函数调用则进入递归 todo: 处理一次有多个的情况
 	funcName, paramValues, err := tool.Caller.ParseCall(ctx, got)
 	callResult := ""
 	if err != nil {
@@ -129,48 +93,28 @@ func (b *Bot) TryHandleFunctionReq(ctx context.Context, h *history.History, req 
 		// todo：要求错误修正的 prompt 在最终正确后可以去掉
 	}
 
-	h.Items = history.PushFunctionCallMSG(h.Items, callResult)
-	req.Messages = history.PushFunctionCallMSG(req.Messages, callResult)
-	req.Messages = append(req.Messages, history.MSGContinue)
-
-	return b.NormalReq(ctx, h, req, depth+1)
+	// 在临时栈中操作
+	*tempMessages = history.PushFunctionCallMSG(*tempMessages, callResult)
+	return b.NormalReq(ctx, staticMessages, tempMessages, depth+1)
 }
 
-func (b *Bot) NormalChat(ctx context.Context, h *history.History, question string) (*api.ChatResp, error) {
+// Question - 只是一个和 bot 聊天的快捷方式
+func (b *Bot) Question(ctx context.Context, h *history.History, question string) (string, error) {
 	h.EnqueueUserMsg(question)
-	return b.HistoryChat(ctx, h)
+	return b.ChatWithHistory(ctx, h)
 }
 
-func (b *Bot) HistoryChat(ctx context.Context, h *history.History) (*api.ChatResp, error) {
+func (b *Bot) ChatWithHistory(ctx context.Context, globalHistory *history.History) (string, error) {
 	log := wlog.ByCtx(ctx, "history_chat")
-	req := b.CreateRequestFromHistory(ctx, h)
-	got, err := b.NormalReq(ctx, h, req, 0)
+	// 创建临时聊天队列
+	messages := b.Messages(ctx, globalHistory)
+	tempMessages := make(history.Messages, 0) // 要保存结果就在调用前创建，不保存的话就是不保留 function 调用过程的模式
+	got, err := b.NormalReq(ctx, messages, &tempMessages, 0)
 	if err != nil {
 		log.WithError(err).Error("normal chat failed")
 	}
+	// 最终结果返回，由外部决定是否组装到全局历史中
 	return got, nil
-}
-
-func (b *Bot) StreamChat(ctx context.Context, h *history.History, question string, handle func(resp *api.ChatResp)) error {
-	log := wlog.ByCtx(ctx, "stream_chat")
-	h.EnqueueUserMsg(question)
-	req := b.CreateRequestFromHistory(ctx, h)
-
-	log.Info("| REQ >>> %s", Req2Str(req))
-
-	ch, err := b.maas.StreamChatWithCtx(ctx, b.Endpoint, req)
-	if err != nil {
-		errVal := &api.Error{}
-		if errors.As(err, &errVal) { // the returned error always type of *api.Error
-			log.WithError(errVal).Errorf("meet maas error")
-		}
-		return irr.Wrap(err, "stream chat failed")
-	}
-
-	for resp := range ch {
-		handle(resp)
-	}
-	return nil
 }
 
 func (b *Bot) String() string {

@@ -9,9 +9,10 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/khicago/irr"
+
 	"github.com/bagaking/botheater/call"
 	"github.com/bagaking/botheater/call/tool"
-	"github.com/khicago/irr"
 )
 
 type (

@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/khicago/irr"
-
 	"github.com/bagaking/goulp/jsonex"
+	"github.com/khicago/irr"
 )
 
 type (

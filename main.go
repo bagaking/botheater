@@ -1,7 +1,3 @@
-// Usage:
-//
-// 1. go get -u github.com/volcengine/volc-sdk-golang
-// 2. VOLC_ACCESSKEY=XXXXX VOLC_SECRETKEY=YYYYY go run main.go
 package main
 
 import (
@@ -11,18 +7,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bagaking/botheater/call/tool"
+	"github.com/sirupsen/logrus"
+
+	"github.com/bagaking/goulp/wlog"
 	"github.com/khicago/got/util/typer"
 
-	"github.com/bagaking/botheater/history"
-
-	"github.com/bagaking/goulp/jsonex"
-
 	"github.com/bagaking/botheater/bot"
+	"github.com/bagaking/botheater/call/tool"
+	"github.com/bagaking/botheater/history"
 	"github.com/bagaking/botheater/tools"
-	"github.com/bagaking/goulp/wlog"
-	"github.com/sirupsen/logrus"
-	"github.com/volcengine/volc-sdk-golang/service/maas/models/api/v2"
 )
 
 const (
@@ -44,22 +37,23 @@ func main() {
 	tm.RegisterTool(&tools.Browser{})
 
 	conf := LoadConf(ctx)
-	botBasic, err := conf.NewBot(initClient(ctx), "botheater_basic", tm)
+
+	botBasic, err := conf.NewBot(ctx, "botheater_basic", tm)
 	if err != nil {
 		log.WithError(err).Fatalf("create botBasic failed")
 	}
 
-	botFileReader, err := conf.NewBot(initClient(ctx), "botheater_filereader", tm)
+	botFileReader, err := conf.NewBot(ctx, "botheater_filereader", tm)
 	if err != nil {
 		log.WithError(err).Fatalf("create botheater_coordinator failed")
 	}
 
-	botCoordinator, err := conf.NewBot(initClient(ctx), "botheater_coordinator", tm)
+	botCoordinator, err := conf.NewBot(ctx, "botheater_coordinator", tm)
 	if err != nil {
 		log.WithError(err).Fatalf("create botheater_coordinator failed")
 	}
 
-	botSearcher, err := conf.NewBot(initClient(ctx), "botheater_searcher", tm)
+	botSearcher, err := conf.NewBot(ctx, "botheater_searcher", tm)
 	if err != nil {
 		log.WithError(err).Fatalf("create botheater_searcher failed")
 	}
@@ -85,22 +79,11 @@ func main() {
 	//	botCoordinator, botFileReader, botBasic)
 
 	// MultiAgentChat(ctx, h, "帮我找到比特币最近的行情", botCoordinator, botFileReader, botBasic) // 搜索可能要优化
-	//MultiAgentChat(ctx, h, "帮我总结什么是鸟狗式", bots...)
+	// MultiAgentChat(ctx, h, "帮我总结什么是鸟狗式", bots...)
 
 	MultiAgentChat(ctx, h, "什么是vector_database", bots...)
 	// MultiAgentChat(ctx, h, "总结之前聊天里，你的观点, 以及用于佐证的代码", botCoordinator) //
 	// MultiAgentChat(ctx, h, "针对这些代码进行改写，使其更优雅，要注意不要重复造轮子", botBasic)
-}
-
-func TestNormalChat(ctx context.Context, b *bot.Bot, question string) {
-	log := wlog.ByCtx(ctx, "TestNormalChat")
-	h := history.NewHistory()
-	resp, err := b.NormalChat(ctx, h, question)
-	if err != nil {
-		log.WithError(err).Errorf("chat failed")
-	}
-
-	log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", bot.Resp2Str(resp))
 }
 
 func MultiAgentChat(ctx context.Context, h *history.History, question string, bots ...*bot.Bot) {
@@ -130,13 +113,13 @@ func MultiAgentChat(ctx context.Context, h *history.History, question string, bo
 			return
 		}
 		log.Infof("enter new round= %d", i)
-		resp, err := bCur.HistoryChat(ctx, h)
+		content, err := bCur.ChatWithHistory(ctx, h)
 		if err != nil {
 			log.WithError(err).Errorf("chat failed")
 		}
-		content := bot.RespMsg2Str(resp)
+
 		h.EnqueueAssistantMsg(content, bCur.PrefabName)
-		log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", bot.Resp2Str(resp))
+		log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", content)
 
 		// continue chat
 		if bot.Caller.HasCall(content) { // 任何有指名 agent 的情况，都调用
@@ -153,10 +136,10 @@ func MultiAgentChat(ctx context.Context, h *history.History, question string, bo
 				bCur = bots[ind]
 				q := strings.Join(params, "; ")
 				// todo：可能不把 history 中的决策过程踢出去更好
-				if last, ok := h.PeekTail(); ok && bCoordinate != nil && last.Name == bCoordinate.PrefabName { // 如果上一句话是 bCoordinate 的决策过程
+				if last, ok := h.PeekTail(); ok && bCoordinate != nil && last.Identity == bCoordinate.PrefabName { // 如果上一句话是 bCoordinate 的决策过程
 					t, _ := h.PopTail() // Pop 栈头
 					log.Infof("dequeue coordinate agent msg, content= %v", t)
-					if last, ok = h.PeekTail(); ok && last.Role == api.ChatRoleUser && last.Content == ContinueMessage {
+					if last, ok = h.PeekTail(); ok && last.Role == history.RoleUser && last.Content == ContinueMessage {
 						t, _ = h.PopTail() // Pop 栈头
 						log.Infof("dequeue coordinate user msg, content= %v", t)
 					}
@@ -202,6 +185,17 @@ func MultiAgentChat(ctx context.Context, h *history.History, question string, bo
 	}
 }
 
+func TestNormalChat(ctx context.Context, b *bot.Bot, question string) {
+	log := wlog.ByCtx(ctx, "TestNormalChat")
+	h := history.NewHistory()
+	resp, err := b.Question(ctx, h, question)
+	if err != nil {
+		log.WithError(err).Errorf("chat failed")
+	}
+
+	log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", resp)
+}
+
 func TestContinuousChat(ctx context.Context, b *bot.Bot) {
 	log := wlog.ByCtx(ctx, "TestContinuousChat")
 	reader := bufio.NewReader(os.Stdin)
@@ -212,31 +206,31 @@ func TestContinuousChat(ctx context.Context, b *bot.Bot) {
 		question = question[:len(question)-1] // 去掉换行符
 
 		h := history.NewHistory()
-		resp, err := b.NormalChat(ctx, h, question)
+		got, err := b.Question(ctx, h, question)
 		if err != nil {
 			log.WithError(err).Errorf("chat failed")
 			continue
 		}
 
-		log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", bot.Resp2Str(resp))
+		log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", got)
 
 	}
 }
 
-func TestStreamChat(ctx context.Context, b *bot.Bot, question string) {
-	log := wlog.ByCtx(ctx, "TestNormalChat")
-
-	handler := func(resp *api.ChatResp) {
-		if resp.Error != nil {
-			// it is possible that error occurs during response processing
-			log.Info(jsonex.MustMarshalToString(resp.Error))
-			return
-		}
-		log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", bot.Resp2Str(resp))
-	}
-
-	h := history.NewHistory()
-	if err := b.StreamChat(ctx, h, question, handler); err != nil {
-		log.WithError(err).Errorf("chat failed")
-	}
-}
+//func TestStreamChat(ctx context.Context, b *bot.Bot, question string) {
+//	log := wlog.ByCtx(ctx, "TestNormalChat")
+//
+//	handler := func(resp *api.ChatResp) {
+//		if resp.Error != nil {
+//			// it is possible that error occurs during response processing
+//			log.Info(jsonex.MustMarshalToString(resp.Error))
+//			return
+//		}
+//		log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", coze.Resp2Str(resp))
+//	}
+//
+//	h := history.NewHistory()
+//	if err := b.StreamChat(ctx, h, question, handler); err != nil {
+//		log.WithError(err).Errorf("chat failed")
+//	}
+//}

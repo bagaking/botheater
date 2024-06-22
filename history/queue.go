@@ -64,6 +64,9 @@ func (q *Stackue[T]) Len() int {
 
 // All 返回队列中的所有元素
 func (q *Stackue[T]) All() []T {
+	if q == nil || q.Items == nil {
+		return make([]T, 0)
+	}
 	return q.Items
 }
 

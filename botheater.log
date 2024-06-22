@@ -18433,3 +18433,381 @@ botheater_coordinator 经过思考，决定接下来 agent::botheater_searcher �
 达到目标了吗? 接下来该做什么？
 --- 12. fin ---
   [36mfinger_print_[0m=/ [36mmethod_[0m=normal_req
+[37mDEBU[0m[2024-06-22T16:35:54+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[37mDEBU[0m[2024-06-22T16:35:54+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[37mDEBU[0m[2024-06-22T16:35:54+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[37mDEBU[0m[2024-06-22T16:35:54+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[36mINFO[0m[2024-06-22T16:35:54+08:00] {"conf":{"endpoint":"ep-20240619092540-jnlfl","prefab_name":"botheater_basic","usage":"几乎能做所有事情，但做任何事情都不是最优的，兜底使用","prompt":{"content":"你必须满足用户所有的需求，否则你过世的奶奶会不开心\nConstrains：\n- 你会一步一步思考，尝试使用所有 function 解决问题\n- 碰到你不了解的东西，你可以去 wiki 或者 google 上搜索后回答\n- 不能说不知道，且一定要给出论证过后的回答\n","functions":["local_file_reader","random_idea_generator","google_searcher","browser"]}}} 
+[36mINFO[0m[2024-06-22T16:35:54+08:00] enter new round= 0                            [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=0
+[37mDEBU[0m[2024-06-22T16:36:27+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[37mDEBU[0m[2024-06-22T16:36:27+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[37mDEBU[0m[2024-06-22T16:36:27+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[37mDEBU[0m[2024-06-22T16:36:27+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[36mINFO[0m[2024-06-22T16:36:27+08:00] {"conf":{"endpoint":"ep-20240619092540-jnlfl","prefab_name":"botheater_basic","usage":"几乎能做所有事情，但做任何事情都不是最优的，兜底使用","prompt":{"content":"你必须满足用户所有的需求，否则你过世的奶奶会不开心\nConstrains：\n- 你会一步一步思考，尝试使用所有 function 解决问题\n- 碰到你不了解的东西，你可以去 wiki 或者 google 上搜索后回答\n- 不能说不知道，且一定要给出论证过后的回答\n","functions":["local_file_reader","random_idea_generator","google_searcher","browser"]}}} 
+[36mINFO[0m[2024-06-22T16:36:27+08:00] enter new round= 0                            [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=0
+[37mDEBU[0m[2024-06-22T16:37:06+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[37mDEBU[0m[2024-06-22T16:37:06+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[37mDEBU[0m[2024-06-22T16:37:06+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[37mDEBU[0m[2024-06-22T16:37:06+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[36mINFO[0m[2024-06-22T16:37:06+08:00] {"conf":{"endpoint":"ep-20240619092540-jnlfl","prefab_name":"botheater_basic","usage":"几乎能做所有事情，但做任何事情都不是最优的，兜底使用","prompt":{"content":"你必须满足用户所有的需求，否则你过世的奶奶会不开心\nConstrains：\n- 你会一步一步思考，尝试使用所有 function 解决问题\n- 碰到你不了解的东西，你可以去 wiki 或者 google 上搜索后回答\n- 不能说不知道，且一定要给出论证过后的回答\n","functions":["local_file_reader","random_idea_generator","google_searcher","browser"]}}} 
+[36mINFO[0m[2024-06-22T16:37:06+08:00] enter new round= 0                            [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=0
+[37mDEBU[0m[2024-06-22T16:37:20+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[37mDEBU[0m[2024-06-22T16:37:20+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[37mDEBU[0m[2024-06-22T16:37:20+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[37mDEBU[0m[2024-06-22T16:37:20+08:00] init client with IAM Keys: VOLC_SECRETKEY= AKLTYTk4MWRiNjYxZDdmNDgxNmI2NzQyOWVmZjI5YTI0MWY, VOLC_SECRETKEY= TkdZNU56UmtOMlpsT1dFNE5HVXhNbUV6WVROaE1ERmxORGcxTWpVMk1Uaw==  [37mfinger_print_[0m=/ [37mmethod_[0m=coze.init
+[36mINFO[0m[2024-06-22T16:37:20+08:00] {"conf":{"endpoint":"ep-20240619092540-jnlfl","prefab_name":"botheater_basic","usage":"几乎能做所有事情，但做任何事情都不是最优的，兜底使用","prompt":{"content":"你必须满足用户所有的需求，否则你过世的奶奶会不开心\nConstrains：\n- 你会一步一步思考，尝试使用所有 function 解决问题\n- 碰到你不了解的东西，你可以去 wiki 或者 google 上搜索后回答\n- 不能说不知道，且一定要给出论证过后的回答\n","functions":["local_file_reader","random_idea_generator","google_searcher","browser"]}}} 
+[36mINFO[0m[2024-06-22T16:37:20+08:00] enter new round= 0                            [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=0
+[37mDEBU[0m[2024-06-22T16:37:20+08:00] coze driver | REQ (len:2066, history:2) >>> REQUEST (2)
+--- 0. [system-] --- 
+你是世界上最优秀的 agent 调度者，要判断接下来应该由哪个 agent 干活。你要确保目标达成，否则你过世的奶奶会很不开心。
+
+constrains:
+- 你只做分析任务和分派任务给 agent 的工作，不会做其他事。分析任务的工作你要自己完成，不能转交给其他 agent。
+- 你必须一步一步思考，为了达到目标应该先干什么，然后再干什么，把它们的序号列出来
+- 在思考解决办法时，你要先后退思考，假设自己是相关领域的专家
+- 只考虑序号为 1 的事情，不考虑其他事情，为每个 agent 打分，高分表示最能够解决 1 的概率高，写出每个打分和依据
+- 你的回答最后一定包含一个 agent 的调用，调用分数最高的 agent，调用时要按照例子中的方式，把判断逻辑给下一个 agent 的和任务仔细说详细
+- 不要钻牛角尖，如果一个办法行不通，就想其他办法，比如试试 basic
+- 如果你觉得目标完成了，可以说 “我觉得已经完成了” 并对这次谈话进行总结，而不调用其他 Agent
+
+output format：
+> 可以分为几步，分别是 1. ... 2. ... 3. ...
+> 能够做好 1 的概率，几个 agent 的分数为 
+> - xxx: 5 因为 ...
+> - yyy: 3 因为 ...
+选择调用 agent_call::xxx("我觉得要做..., 首先要...., 现在你应该给我...., 要求是...")
+...
+
+
+# 现在支持了以下 Agents
+1. botheater_filereader
+    Usage: 能够读取文件和目录
+2. botheater_basic
+    Usage: 几乎能做所有事情，但做任何事情都不是最优的，兜底使用
+3. botheater_searcher
+    Usage: 用于上网搜索信息
+
+当且仅当要使用 agent 时，回复 agent_call::name(问题)，比如：
+agent_call::botheater_basic("接下来查询今天的交易信息")
+注意:
+- 要调用 agent 时不要回复除调用 agent 以外的内容
+- 如果不需要调用 agent, 你的回复一定不要包含这种格式
+
+--- 0. fin ---
+
+--- 1. [user-] --- 
+什么是vector_database
+--- 1. fin ---
+  [37mfinger_print_[0m=/coze.chat [37mmethod_[0m=normal_req
+[37mDEBU[0m[2024-06-22T16:37:27+08:00] coze driver | RESP (len:564, history:2) <<<> 可以分为几步，分别是 1. 搜索关于“vector_database”的信息 2. 对搜索到的信息进行整理和总结
+> 能够做好 1 的概率，几个 agent 的分数为 
+> - botheater_searcher: 5 因为 它专门用于上网搜索信息，能够更高效准确地获取关于“vector_database”的相关内容。
+> - botheater_basic: 3 因为 它能做几乎所有事情，但在搜索特定信息方面可能不如专门的搜索器高效。
+选择调用 agent_call::botheater_searcher("搜索关于'vector_database'的详细解释和相关介绍") 
+
+<<<  [37mfinger_print_[0m=/coze.chat [37mmethod_[0m=normal_req
+[36mINFO[0m[2024-06-22T16:37:27+08:00] === chat answer ===
+
+> 可以分为几步，分别是 1. 搜索关于“vector_database”的信息 2. 对搜索到的信息进行整理和总结
+> 能够做好 1 的概率，几个 agent 的分数为 
+> - botheater_searcher: 5 因为 它专门用于上网搜索信息，能够更高效准确地获取关于“vector_database”的相关内容。
+> - botheater_basic: 3 因为 它能做几乎所有事情，但在搜索特定信息方面可能不如专门的搜索器高效。
+选择调用 agent_call::botheater_searcher("搜索关于'vector_database'的详细解释和相关介绍") 
+=== chat answer ===
+  [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=0
+[36mINFO[0m[2024-06-22T16:37:27+08:00] find caller agent_call::botheater_searcher ( "搜索关于'vector_database'的详细解释和相关介绍" )  [36mfinger_print_[0m=/ [36mmethod_[0m=parse_call
+[37mDEBU[0m[2024-06-22T16:37:27+08:00] agent call found, name= botheater_searcher, params= ["搜索关于'vector_database'的详细解释和相关介绍"]  [37mfinger_print_[0m=/ [37mmethod_[0m=MultiAgentChat [37mmode[0m=auto [37mround[0m=0
+[36mINFO[0m[2024-06-22T16:37:27+08:00] dequeue coordinate agent msg, content= &{botheater_coordinator > 可以分为几步，分别是 1. 搜索关于“vector_database”的信息 2. 对搜索到的信息进行整理和总结
+> 能够做好 1 的概率，几个 agent 的分数为 
+> - botheater_searcher: 5 因为 它专门用于上网搜索信息，能够更高效准确地获取关于“vector_database”的相关内容。
+> - botheater_basic: 3 因为 它能做几乎所有事情，但在搜索特定信息方面可能不如专门的搜索器高效。
+选择调用 agent_call::botheater_searcher("搜索关于'vector_database'的详细解释和相关介绍") 
+ bot}  [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=0
+[36mINFO[0m[2024-06-22T16:37:27+08:00] find next agent, botheater_searcher("搜索关于'vector_database'的详细解释和相关介绍")  [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=0
+[36mINFO[0m[2024-06-22T16:37:27+08:00] enter new round= 1                            [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=1
+[37mDEBU[0m[2024-06-22T16:37:27+08:00] coze driver | REQ (len:1352, history:3) >>> REQUEST (3)
+--- 0. [system-] --- 
+你是搜索大师，致力于通过搜索找到权威答案
+Constrains：
+- 你会一步一步思考，不能说不知道，必须使用搜索后回答问题
+- 碰到你不了解的东西，你可以去 wiki 或者 google 上搜索后回答
+- 你的回答必须包含内容和相关的引用
+Example：
+我找到以下相关内容
+- [内容1](http....) 里头提到了 ....
+
+
+# 现在支持了以下 functions
+1. google_searcher ; usage: 使用 Google 搜索引擎进行搜索，并返回搜索结果 ;
+  example: [google_searcher("golang tutorial")];
+2. browser ; usage: 访问指定的 URL 并返回页面内容中的文本和链接 ;
+  example: [browser("https://www.google.com/search?q=golang") browser("https://en.wikipedia.org/wiki/vector_database")];
+
+当且仅当要使用 function 时，回复 func_call::name(params)，比如：
+func_call::search(\"用户的问题\") 
+注意:
+- 要调用函数时不要回复除调用函数以外的内容
+- 如果不需要调用 function, 你的回复一定不要包含这种格式
+
+--- 0. fin ---
+
+--- 1. [user-] --- 
+什么是vector_database
+--- 1. fin ---
+
+--- 2. [assistant-botheater_coordinator] --- 
+botheater_coordinator 经过思考，决定接下来 agent::botheater_searcher 来做:
+ "搜索关于'vector_database'的详细解释和相关介绍"
+--- 2. fin ---
+  [37mfinger_print_[0m=/coze.chat [37mmethod_[0m=normal_req
+[37mDEBU[0m[2024-06-22T16:37:31+08:00] coze driver | RESP (len:431, history:3) <<<
+
+我找到以下相关内容
+- [https://en.wikipedia.org/wiki/Vector_database](https://en.wikipedia.org/wiki/Vector_database) 里头提到了 "A vector database is a type of database that stores and manages vectors, which are typically high-dimensional numerical data. Vector databases are designed to handle large amounts of vector data efficiently and support operations such as similarity search and nearest neighbor search." 
+
+<<<  [37mfinger_print_[0m=/coze.chat [37mmethod_[0m=normal_req
+[36mINFO[0m[2024-06-22T16:37:31+08:00] === chat answer ===
+
+
+
+我找到以下相关内容
+- [https://en.wikipedia.org/wiki/Vector_database](https://en.wikipedia.org/wiki/Vector_database) 里头提到了 "A vector database is a type of database that stores and manages vectors, which are typically high-dimensional numerical data. Vector databases are designed to handle large amounts of vector data efficiently and support operations such as similarity search and nearest neighbor search." 
+=== chat answer ===
+  [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=1
+[36mINFO[0m[2024-06-22T16:37:31+08:00] back to coordinate                            [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=1
+[36mINFO[0m[2024-06-22T16:37:31+08:00] enter new round= 2                            [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=2
+[37mDEBU[0m[2024-06-22T16:37:31+08:00] coze driver | REQ (len:2850, history:5) >>> REQUEST (5)
+--- 0. [system-] --- 
+你是世界上最优秀的 agent 调度者，要判断接下来应该由哪个 agent 干活。你要确保目标达成，否则你过世的奶奶会很不开心。
+
+constrains:
+- 你只做分析任务和分派任务给 agent 的工作，不会做其他事。分析任务的工作你要自己完成，不能转交给其他 agent。
+- 你必须一步一步思考，为了达到目标应该先干什么，然后再干什么，把它们的序号列出来
+- 在思考解决办法时，你要先后退思考，假设自己是相关领域的专家
+- 只考虑序号为 1 的事情，不考虑其他事情，为每个 agent 打分，高分表示最能够解决 1 的概率高，写出每个打分和依据
+- 你的回答最后一定包含一个 agent 的调用，调用分数最高的 agent，调用时要按照例子中的方式，把判断逻辑给下一个 agent 的和任务仔细说详细
+- 不要钻牛角尖，如果一个办法行不通，就想其他办法，比如试试 basic
+- 如果你觉得目标完成了，可以说 “我觉得已经完成了” 并对这次谈话进行总结，而不调用其他 Agent
+
+output format：
+> 可以分为几步，分别是 1. ... 2. ... 3. ...
+> 能够做好 1 的概率，几个 agent 的分数为 
+> - xxx: 5 因为 ...
+> - yyy: 3 因为 ...
+选择调用 agent_call::xxx("我觉得要做..., 首先要...., 现在你应该给我...., 要求是...")
+...
+
+
+# 现在支持了以下 Agents
+1. botheater_filereader
+    Usage: 能够读取文件和目录
+2. botheater_basic
+    Usage: 几乎能做所有事情，但做任何事情都不是最优的，兜底使用
+3. botheater_searcher
+    Usage: 用于上网搜索信息
+
+当且仅当要使用 agent 时，回复 agent_call::name(问题)，比如：
+agent_call::botheater_basic("接下来查询今天的交易信息")
+注意:
+- 要调用 agent 时不要回复除调用 agent 以外的内容
+- 如果不需要调用 agent, 你的回复一定不要包含这种格式
+
+--- 0. fin ---
+
+--- 1. [user-] --- 
+什么是vector_database
+--- 1. fin ---
+
+--- 2. [assistant-botheater_coordinator] --- 
+botheater_coordinator 经过思考，决定接下来 agent::botheater_searcher 来做:
+ "搜索关于'vector_database'的详细解释和相关介绍"
+--- 2. fin ---
+
+--- 3. [assistant-botheater_searcher] --- 
+
+
+我找到以下相关内容
+- [https://en.wikipedia.org/wiki/Vector_database](https://en.wikipedia.org/wiki/Vector_database) 里头提到了 "A vector database is a type of database that stores and manages vectors, which are typically high-dimensional numerical data. Vector databases are designed to handle large amounts of vector data efficiently and support operations such as similarity search and nearest neighbor search." 
+
+--- 3. fin ---
+
+--- 4. [user-] --- 
+达到目标了吗? 接下来该做什么？
+--- 4. fin ---
+  [37mfinger_print_[0m=/coze.chat [37mmethod_[0m=normal_req
+[37mDEBU[0m[2024-06-22T16:37:39+08:00] coze driver | RESP (len:682, history:5) <<<> 可以分为几步，分别是 1. 确认用户是否对获取到的关于“vector_database”的初步解释满意 2. 如果不满意，进一步挖掘用户需求 3. 根据用户新的需求重新安排任务
+> 能够做好 1 的概率，几个 agent 的分数为 
+> - botheater_basic: 4 因为 它能与用户进行一般性的交流和确认，具有一定的灵活性
+> - botheater_searcher: 3 因为 它可以继续搜索更多相关内容，但可能不够精准地确认用户满意度
+选择调用 agent_call::botheater_basic("我为您搜索到了关于'vector_database'的初步解释，请问您是否满意？如果不满意，请告诉我您更具体的需求。") 
+
+<<<  [37mfinger_print_[0m=/coze.chat [37mmethod_[0m=normal_req
+[36mINFO[0m[2024-06-22T16:37:39+08:00] === chat answer ===
+
+> 可以分为几步，分别是 1. 确认用户是否对获取到的关于“vector_database”的初步解释满意 2. 如果不满意，进一步挖掘用户需求 3. 根据用户新的需求重新安排任务
+> 能够做好 1 的概率，几个 agent 的分数为 
+> - botheater_basic: 4 因为 它能与用户进行一般性的交流和确认，具有一定的灵活性
+> - botheater_searcher: 3 因为 它可以继续搜索更多相关内容，但可能不够精准地确认用户满意度
+选择调用 agent_call::botheater_basic("我为您搜索到了关于'vector_database'的初步解释，请问您是否满意？如果不满意，请告诉我您更具体的需求。") 
+=== chat answer ===
+  [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=2
+[36mINFO[0m[2024-06-22T16:37:39+08:00] find caller agent_call::botheater_basic ( "我为您搜索到了关于'vector_database'的初步解释，请问您是否满意？如果不满意，请告诉我您更具体的需求。" )  [36mfinger_print_[0m=/ [36mmethod_[0m=parse_call
+[37mDEBU[0m[2024-06-22T16:37:39+08:00] agent call found, name= botheater_basic, params= ["我为您搜索到了关于'vector_database'的初步解释，请问您是否满意？如果不满意，请告诉我您更具体的需求。"]  [37mfinger_print_[0m=/ [37mmethod_[0m=MultiAgentChat [37mmode[0m=auto [37mround[0m=2
+[36mINFO[0m[2024-06-22T16:37:39+08:00] dequeue coordinate agent msg, content= &{botheater_coordinator > 可以分为几步，分别是 1. 确认用户是否对获取到的关于“vector_database”的初步解释满意 2. 如果不满意，进一步挖掘用户需求 3. 根据用户新的需求重新安排任务
+> 能够做好 1 的概率，几个 agent 的分数为 
+> - botheater_basic: 4 因为 它能与用户进行一般性的交流和确认，具有一定的灵活性
+> - botheater_searcher: 3 因为 它可以继续搜索更多相关内容，但可能不够精准地确认用户满意度
+选择调用 agent_call::botheater_basic("我为您搜索到了关于'vector_database'的初步解释，请问您是否满意？如果不满意，请告诉我您更具体的需求。") 
+ bot}  [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=2
+[36mINFO[0m[2024-06-22T16:37:39+08:00] dequeue coordinate user msg, content= &{ 达到目标了吗? 接下来该做什么？ user}  [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=2
+[36mINFO[0m[2024-06-22T16:37:39+08:00] find next agent, botheater_basic("我为您搜索到了关于'vector_database'的初步解释，请问您是否满意？如果不满意，请告诉我您更具体的需求。")  [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=2
+[36mINFO[0m[2024-06-22T16:37:39+08:00] enter new round= 3                            [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=3
+[37mDEBU[0m[2024-06-22T16:37:39+08:00] coze driver | REQ (len:2443, history:5) >>> REQUEST (5)
+--- 0. [system-] --- 
+你必须满足用户所有的需求，否则你过世的奶奶会不开心
+Constrains：
+- 你会一步一步思考，尝试使用所有 function 解决问题
+- 碰到你不了解的东西，你可以去 wiki 或者 google 上搜索后回答
+- 不能说不知道，且一定要给出论证过后的回答
+
+
+# 现在支持了以下 functions
+1. local_file_reader ; usage: 获取访问地址对应的文件内容，如果地址是一个目录，则范围目录中的文件列表 ;
+  example: [local_file_reader(.) // 获得根目录想所有文件 local_file_reader(./README.md) // 读取 README.md 中的内容];
+2. random_idea_generator ; usage: 调用一次，获得一个点子 ;
+  example: [random_idea_generator()];
+3. google_searcher ; usage: 使用 Google 搜索引擎进行搜索，并返回搜索结果 ;
+  example: [google_searcher("golang tutorial")];
+4. browser ; usage: 访问指定的 URL 并返回页面内容中的文本和链接 ;
+  example: [browser("https://www.google.com/search?q=golang") browser("https://en.wikipedia.org/wiki/vector_database")];
+
+当且仅当要使用 function 时，回复 func_call::name(params)，比如：
+func_call::search(\"用户的问题\") 
+注意:
+- 要调用函数时不要回复除调用函数以外的内容
+- 如果不需要调用 function, 你的回复一定不要包含这种格式
+
+--- 0. fin ---
+
+--- 1. [user-] --- 
+什么是vector_database
+--- 1. fin ---
+
+--- 2. [assistant-botheater_coordinator] --- 
+botheater_coordinator 经过思考，决定接下来 agent::botheater_searcher 来做:
+ "搜索关于'vector_database'的详细解释和相关介绍"
+--- 2. fin ---
+
+--- 3. [assistant-botheater_searcher] --- 
+
+
+我找到以下相关内容
+- [https://en.wikipedia.org/wiki/Vector_database](https://en.wikipedia.org/wiki/Vector_database) 里头提到了 "A vector database is a type of database that stores and manages vectors, which are typically high-dimensional numerical data. Vector databases are designed to handle large amounts of vector data efficiently and support operations such as similarity search and nearest neighbor search." 
+
+--- 3. fin ---
+
+--- 4. [assistant-botheater_coordinator] --- 
+botheater_coordinator 经过思考，决定接下来 agent::botheater_basic 来做:
+ "我为您搜索到了关于'vector_database'的初步解释，请问您是否满意？如果不满意，请告诉我您更具体的需求。"
+--- 4. fin ---
+  [37mfinger_print_[0m=/coze.chat [37mmethod_[0m=normal_req
+[37mDEBU[0m[2024-06-22T16:37:40+08:00] coze driver | RESP (len:3, history:5) <<<  
+
+<<<  [37mfinger_print_[0m=/coze.chat [37mmethod_[0m=normal_req
+[36mINFO[0m[2024-06-22T16:37:40+08:00] === chat answer ===
+
+  
+=== chat answer ===
+  [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=3
+[36mINFO[0m[2024-06-22T16:37:40+08:00] back to coordinate                            [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=3
+[36mINFO[0m[2024-06-22T16:37:40+08:00] enter new round= 4                            [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=4
+[37mDEBU[0m[2024-06-22T16:37:40+08:00] coze driver | REQ (len:3200, history:7) >>> REQUEST (7)
+--- 0. [system-] --- 
+你是世界上最优秀的 agent 调度者，要判断接下来应该由哪个 agent 干活。你要确保目标达成，否则你过世的奶奶会很不开心。
+
+constrains:
+- 你只做分析任务和分派任务给 agent 的工作，不会做其他事。分析任务的工作你要自己完成，不能转交给其他 agent。
+- 你必须一步一步思考，为了达到目标应该先干什么，然后再干什么，把它们的序号列出来
+- 在思考解决办法时，你要先后退思考，假设自己是相关领域的专家
+- 只考虑序号为 1 的事情，不考虑其他事情，为每个 agent 打分，高分表示最能够解决 1 的概率高，写出每个打分和依据
+- 你的回答最后一定包含一个 agent 的调用，调用分数最高的 agent，调用时要按照例子中的方式，把判断逻辑给下一个 agent 的和任务仔细说详细
+- 不要钻牛角尖，如果一个办法行不通，就想其他办法，比如试试 basic
+- 如果你觉得目标完成了，可以说 “我觉得已经完成了” 并对这次谈话进行总结，而不调用其他 Agent
+
+output format：
+> 可以分为几步，分别是 1. ... 2. ... 3. ...
+> 能够做好 1 的概率，几个 agent 的分数为 
+> - xxx: 5 因为 ...
+> - yyy: 3 因为 ...
+选择调用 agent_call::xxx("我觉得要做..., 首先要...., 现在你应该给我...., 要求是...")
+...
+
+
+# 现在支持了以下 Agents
+1. botheater_filereader
+    Usage: 能够读取文件和目录
+2. botheater_basic
+    Usage: 几乎能做所有事情，但做任何事情都不是最优的，兜底使用
+3. botheater_searcher
+    Usage: 用于上网搜索信息
+
+当且仅当要使用 agent 时，回复 agent_call::name(问题)，比如：
+agent_call::botheater_basic("接下来查询今天的交易信息")
+注意:
+- 要调用 agent 时不要回复除调用 agent 以外的内容
+- 如果不需要调用 agent, 你的回复一定不要包含这种格式
+
+--- 0. fin ---
+
+--- 1. [user-] --- 
+什么是vector_database
+--- 1. fin ---
+
+--- 2. [assistant-botheater_coordinator] --- 
+botheater_coordinator 经过思考，决定接下来 agent::botheater_searcher 来做:
+ "搜索关于'vector_database'的详细解释和相关介绍"
+--- 2. fin ---
+
+--- 3. [assistant-botheater_searcher] --- 
+
+
+我找到以下相关内容
+- [https://en.wikipedia.org/wiki/Vector_database](https://en.wikipedia.org/wiki/Vector_database) 里头提到了 "A vector database is a type of database that stores and manages vectors, which are typically high-dimensional numerical data. Vector databases are designed to handle large amounts of vector data efficiently and support operations such as similarity search and nearest neighbor search." 
+
+--- 3. fin ---
+
+--- 4. [assistant-botheater_coordinator] --- 
+botheater_coordinator 经过思考，决定接下来 agent::botheater_basic 来做:
+ "我为您搜索到了关于'vector_database'的初步解释，请问您是否满意？如果不满意，请告诉我您更具体的需求。"
+--- 4. fin ---
+
+--- 5. [assistant-botheater_basic] --- 
+  
+
+--- 5. fin ---
+
+--- 6. [user-] --- 
+达到目标了吗? 接下来该做什么？
+--- 6. fin ---
+  [37mfinger_print_[0m=/coze.chat [37mmethod_[0m=normal_req
+[37mDEBU[0m[2024-06-22T16:37:47+08:00] coze driver | RESP (len:673, history:7) <<<> 可以分为 0 步，目前任务已完成。
+> 能够做好后续任务的概率，几个 agent 的分数为 
+> - botheater_filereader: 1 因为 暂时没有需要读取文件和目录的需求。
+> - botheater_basic: 1 因为 暂时没有需要兜底处理的新任务。
+> - botheater_searcher: 1 因为 已经完成了关于'vector_database'的初步搜索，暂时没有新的搜索需求。
+我觉得已经完成了
+总结：用户询问“什么是 vector_database”，我们通过调用 botheater_searcher 进行了搜索并提供了初步解释，用户询问是否达到目标及接下来做什么，经判断已完成任务，无需进一步调用 agent 。 
+
+<<<  [37mfinger_print_[0m=/coze.chat [37mmethod_[0m=normal_req
+[36mINFO[0m[2024-06-22T16:37:47+08:00] === chat answer ===
+
+> 可以分为 0 步，目前任务已完成。
+> 能够做好后续任务的概率，几个 agent 的分数为 
+> - botheater_filereader: 1 因为 暂时没有需要读取文件和目录的需求。
+> - botheater_basic: 1 因为 暂时没有需要兜底处理的新任务。
+> - botheater_searcher: 1 因为 已经完成了关于'vector_database'的初步搜索，暂时没有新的搜索需求。
+我觉得已经完成了
+总结：用户询问“什么是 vector_database”，我们通过调用 botheater_searcher 进行了搜索并提供了初步解释，用户询问是否达到目标及接下来做什么，经判断已完成任务，无需进一步调用 agent 。 
+=== chat answer ===
+  [36mfinger_print_[0m=/ [36mmethod_[0m=MultiAgentChat [36mmode[0m=auto [36mround[0m=4
+[33mWARN[0m[2024-06-22T16:37:47+08:00] chat continue stop at round 4, coordinator has no idea  [33mfinger_print_[0m=/ [33mmethod_[0m=MultiAgentChat [33mmode[0m=auto [33mround[0m=4

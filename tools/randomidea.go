@@ -38,6 +38,9 @@ func (r *RandomIdeaGenerator) Execute(data map[string]string) (any, error) {
 		"学习一门新技能",
 		"写一篇博客",
 		"尝试新的食谱",
+		"继续想想",
+		"找一个相似的东西",
+		"想想背后的道理",
 	}
 
 	rand.Seed(time.Now().UnixNano())

@@ -3,9 +3,10 @@ package tools
 import (
 	"net/url"
 
+	"github.com/khicago/irr"
+
 	"github.com/bagaking/botheater/call"
 	"github.com/bagaking/botheater/call/tool"
-	"github.com/khicago/irr"
 )
 
 type (
