@@ -5,15 +5,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/bagaking/botheater/driver"
-	"github.com/khicago/irr"
-	client "github.com/volcengine/volc-sdk-golang/service/maas/v2"
-
+	"github.com/bagaking/botheater/utils"
 	"github.com/bagaking/goulp/wlog"
 	"github.com/khicago/got/util/typer"
-
+	"github.com/khicago/irr"
 	"github.com/volcengine/volc-sdk-golang/service/maas/models/api/v2"
+	client "github.com/volcengine/volc-sdk-golang/service/maas/v2"
 
+	"github.com/bagaking/botheater/driver"
 	"github.com/bagaking/botheater/history"
 )
 
@@ -34,7 +33,7 @@ func New(maas *client.MaaS, endpointID string) *Driver {
 func (d *Driver) Chat(ctx context.Context, messages []*history.Message) (got string, err error) {
 	log, ctx := wlog.ByCtxAndCache(ctx, "coze.chat")
 	req := d.buildRequest(messages)
-	d.debugStart(req, log, messages)
+	d.debugStart(req, log, len(messages))
 
 	resp, status, err := d.maas.Chat(d.EndpointID, req)
 	if err != nil {
@@ -56,24 +55,34 @@ func (d *Driver) Chat(ctx context.Context, messages []*history.Message) (got str
 		// got = "got empty message，fallback to all:\n" + jsonex.MustMarshalToString(resp)
 	}
 
-	d.debugFinish(log, got, messages)
+	d.debugFinish(log, got, len(messages))
 
 	return got, nil
 }
 
-func (d *Driver) debugFinish(log wlog.Log, got string, messages []*history.Message) {
-	log.Debugf("coze driver | RESP (len:%d, history:%d) <<<\b%s\n<<<", len(got), len(messages), got)
+func (d *Driver) debugFinish(log wlog.Log, got string, lenHistory int) {
+	log.Debugf("\n%s\n",
+		utils.SPrintWithFrameCard(
+			fmt.Sprintf("coze driver <<< RESP (len:%d, history:%d)", len(got), lenHistory),
+			got, 120,
+		),
+	)
 }
 
-func (d *Driver) debugStart(req *api.ChatReq, log wlog.Log, messages []*history.Message) {
+func (d *Driver) debugStart(req *api.ChatReq, log wlog.Log, lenHistory int) {
 	reqStr := Req2Str(req)
-	log.Debugf("coze driver | REQ (len:%d, history:%d) >>> %s", len(reqStr), len(messages), reqStr)
+	log.Debugf("\n%s\n",
+		utils.SPrintWithFrameCard(
+			fmt.Sprintf("coze driver >>> REQ (len:%d, history:%d)", len(reqStr), lenHistory),
+			reqStr, 120,
+		),
+	)
 }
 
 func (d *Driver) StreamChat(ctx context.Context, messages []*history.Message, handle func(got string)) error {
 	log, ctx := wlog.ByCtxAndCache(ctx, "coze.stream")
 	req := d.buildRequest(messages)
-	d.debugStart(req, log, messages)
+	d.debugStart(req, log, len(messages))
 
 	ch, err := d.maas.StreamChatWithCtx(ctx, d.EndpointID, req)
 	if err != nil {
@@ -88,7 +97,7 @@ func (d *Driver) StreamChat(ctx context.Context, messages []*history.Message, ha
 	for resp := range ch {
 		round++
 		got := RespMsg2Str(resp)
-		d.debugFinish(log, fmt.Sprintf("\t -- stream(%d) --\n%s", round, got), messages)
+		d.debugFinish(log, fmt.Sprintf("\t -- stream(%d) --\n%s", round, got), len(messages))
 		handle(got)
 
 	}
