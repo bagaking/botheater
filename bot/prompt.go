@@ -12,11 +12,16 @@ import (
 )
 
 type (
+	FunctionMode string
+
 	Prompt struct {
 		Content string `yaml:"content,omitempty" json:"content,omitempty" `
 
-		// function names
+		// Functions 放在 Prompt 里，处于对于 Functions 调用是 prompt 的一部分来理解
+		// todo: 这个有待考虑，因为实际上一切 Agent 行为都会体现在 Prompt 上，且 Example 可以基于知识库生成，因此这一层或许未必需要
 		Functions []string `yaml:"functions,omitempty" json:"functions,omitempty"`
+
+		FunctionMode `yaml:"function_mode,omitempty" json:"function_mode,omitempty"`
 	}
 )
 
@@ -31,6 +36,11 @@ func_call::search(\"用户的问题\")
 - 如果不需要调用 function, 你的回复一定不要包含这种格式
 - 不允许输出空内容，不知道能做什么时说明即可
 `
+
+	// FunctionModePrivateOnly 遗忘模式, function 调用过程不会到原始上下文
+	FunctionModePrivateOnly FunctionMode = "private"
+	// FunctionModeSampleOnly 采样模式, 要求 agent 将 function 调用总结成 sample，只有 sample 会到原始上下文
+	FunctionModeSampleOnly FunctionMode = "sample"
 )
 
 // 获取函数信息
@@ -47,7 +57,12 @@ func (p *Prompt) makeFunctions(tm *tool.Manager) (string, error) {
 		}
 		info += fmt.Sprintf("%d. %s ; usage: %s ;\n  example: %v;\n", i+1, t.Name(), t.Usage(), t.Examples())
 	}
-	return info + FuncTellTail, nil
+	ret := info + FuncTellTail
+	if p.FunctionMode == FunctionModeSampleOnly {
+		ret += `没有调用函数的时候，要对过去发生的事情进行总结`
+	}
+
+	return ret, nil
 }
 
 func (p *Prompt) BuildSystemMessage(ctx context.Context, tm *tool.Manager) *history.Message {
