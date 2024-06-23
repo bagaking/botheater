@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -89,7 +90,7 @@ func (b *Bot) NormalReq(ctx context.Context, staticMessages history.Messages, te
 		tempMessages = &tl
 	}
 
-	got, err := b.driver.Chat(ctx, staticMessages)
+	got, err := b.driver.Chat(ctx, append(staticMessages, *tempMessages...))
 	if err != nil {
 		return "", irr.Wrap(err, "normal req failed, depth= %d", depth)
 	}
@@ -99,7 +100,7 @@ func (b *Bot) NormalReq(ctx context.Context, staticMessages history.Messages, te
 		return b.PrefabName + " 开小差了，请重试", nil
 	}
 
-	// 如果没有后续的函数调用就直接返回
+	// 如果没有后续的函数调用就 **直接返回**
 	if !tool.Caller.HasCall(got) {
 		log.Infof("-- 在 depth= %d 的调用中，agent 不调用任何 Function 直接给出响应：`%s`", depth, got)
 		return got, nil
@@ -119,7 +120,11 @@ func (b *Bot) NormalReq(ctx context.Context, staticMessages history.Messages, te
 
 	// 在临时栈中操作
 	*tempMessages = history.PushFunctionCallMSG(*tempMessages, callResult)
-	log.Infof("--> call %s(%v) result %s", funcName, paramValues, callResult)
+
+	log.Infof("\n%s\n", utils.SPrintWithCallStack(
+		fmt.Sprintf("<-- function call stack [%d] --> %s(%v)", depth, funcName, strings.Join(paramValues, ", ")),
+		callResult, 120))
+
 	return b.NormalReq(ctx, staticMessages, tempMessages, depth+1)
 }
 

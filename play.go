@@ -82,7 +82,7 @@ func MultiAgentChat(ctx context.Context, h *history.History, question string, bo
 					log.Infof("dequeue coordinate user msg, content= %v", t)
 				}
 
-				h.EnqueueAssistantMsg(
+				h.EnqueueCoordinateMsg(
 					fmt.Sprintf("%s 经过思考，决定接下来 agent::%s 来做:\n %s", bCoordinate.PrefabName, bCur.PrefabName, q),
 					bCoordinate.PrefabName,
 				)

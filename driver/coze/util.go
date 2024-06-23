@@ -28,6 +28,7 @@ func Msg2Str(ind int, msg *api.Message) string {
 		content = "!!got-empty-content!! all msg is:\n" + jsonex.MustMarshalToString(msg)
 	}
 
+	// return fmt.Sprintf("--- %d. name[%s] --- \n%v\n--- %d. fin ---\n\n", ind, msg.Name, content, ind)
 	return fmt.Sprintf("--- %d. role[%s] name[%s] --- \n%v\n--- %d. fin ---\n\n", ind, msg.Role, msg.Name, content, ind)
 }
 

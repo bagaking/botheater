@@ -64,7 +64,7 @@ func (d *Driver) debugFinish(log wlog.Log, got string, lenHistory int) {
 	log.Debugf("\n%s\n",
 		utils.SPrintWithFrameCard(
 			fmt.Sprintf("coze driver <<< RESP (len:%d, history:%d)", len(got), lenHistory),
-			got, 120,
+			got, 120, utils.StyTalk,
 		),
 	)
 }
@@ -74,7 +74,7 @@ func (d *Driver) debugStart(req *api.ChatReq, log wlog.Log, lenHistory int) {
 	log.Debugf("\n%s\n",
 		utils.SPrintWithFrameCard(
 			fmt.Sprintf("coze driver >>> REQ (len:%d, history:%d)", len(reqStr), lenHistory),
-			reqStr, 120,
+			reqStr, 120, utils.StyTalk,
 		),
 	)
 }

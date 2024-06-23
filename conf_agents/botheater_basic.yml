@@ -1,6 +1,6 @@
 endpoint: "ep-20240619092540-jnlfl"
 prefab_name: "botheater_basic"
-usage: "几乎能做所有事情，但做任何事情都不是最优的，兜底使用"
+usage: "几乎能做所有事情，但做任何事情都不是最优的，只能兜底使用"
 prompt:
   content: |
     你必须满足用户所有的需求，否则你过世的奶奶会不开心

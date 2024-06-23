@@ -37,6 +37,14 @@ func (h *History) EnqueueUserMsg(question string) {
 	})
 }
 
+func (h *History) EnqueueCoordinateMsg(command string, assistantName string) {
+	h.Stackue.Enqueue(&Message{
+		Content:  command,
+		Role:     RoleUser,
+		Identity: assistantName,
+	})
+}
+
 // EnqueueAssistantMsg 将助手消息入队
 func (h *History) EnqueueAssistantMsg(answer string, assistantName string) {
 	if len(answer) > MaxAssistantMsgLength {
