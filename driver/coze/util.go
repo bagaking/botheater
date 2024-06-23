@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bagaking/botheater/utils"
+
 	"github.com/bagaking/goulp/jsonex"
 
 	"github.com/volcengine/volc-sdk-golang/service/maas/models/api/v2"
@@ -28,8 +30,8 @@ func Msg2Str(ind int, msg *api.Message) string {
 		content = "!!got-empty-content!! all msg is:\n" + jsonex.MustMarshalToString(msg)
 	}
 
-	// return fmt.Sprintf("--- %d. name[%s] --- \n%v\n--- %d. fin ---\n\n", ind, msg.Name, content, ind)
-	return fmt.Sprintf("--- %d. role[%s] name[%s] --- \n%v\n--- %d. fin ---\n\n", ind, msg.Role, msg.Name, content, ind)
+	return utils.SPrintWithMsgCard(fmt.Sprintf("--- %d. name[%s] (len:%d)---", ind, msg.Name, len(content)), content, 110)
+	// return utils.SPrintWithMsgCard(fmt.Sprintf("--- %d. role[%s] name[%s] (len:%d) ---", ind, msg.Role, msg.Name, len(content)), content, 110)
 }
 
 func Resp2Str(resp *api.ChatResp) string {

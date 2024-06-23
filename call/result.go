@@ -46,7 +46,7 @@ func (result *Result) ToPrompt() string {
 	if str, ok := result.Response.(string); ok {
 		strResp = str
 	} else {
-		jsonex.MustMarshalToString(result.Response)
+		strResp = jsonex.MustMarshalToString(result.Response)
 	}
 
 	return fmt.Sprintf(ct.Prefix+"%s(%s) 调用成功!\n结果为: %s", result.FunctionName, strings.Join(result.ParamValues, ","), strResp)

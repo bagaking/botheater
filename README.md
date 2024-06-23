@@ -111,3 +111,8 @@ Botheater 支持多代理协作，通过 `Coordinator` 代理来协调其他代�
 - google 下来的结果并不可用
 - prompt 组装错误 (比如 call agents, 有些地方拼错的情况), 有时由于模型的修复能力可以调用对, 所以表现为概率失败, 较难发现
 - 轮数多了以后，效果快速变差, 实现 Memory, Summarize, KnowledgeBase (RAG) 是必要的
+- 读取类型的 bot，不知道已经出现过的信息之后看不到
+
+Insight
+- 让 agent 输出思考过程是个非常重要的实践，可以去调优。比如我发现 Coordinator 在文件不错在时倾向于用 basic 而不是 file_reader。我看了它的判断逻辑，居然是觉得不确定 file_reader 没有 "确认" 的功能
+- 另外就是想让 agents 干好活，问题的质量很重要，因为这种自我协调的搞法，过程中没有用户反馈，容易不充分理解需求，或是几步就跑偏了。我在考虑是不是让 coord 锁定一下结果，这个可以和总结的 agent 一起做

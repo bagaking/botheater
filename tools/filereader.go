@@ -2,7 +2,9 @@ package tools
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/khicago/irr"
 
@@ -28,11 +30,15 @@ func (l *LocalFileReader) Name() string {
 }
 
 func (l *LocalFileReader) Usage() string {
-	return "获取访问地址对应的文件内容，如果地址是一个目录，则范围目录中的文件列表"
+	return "可以查询文件目录，或是获取访问地址对应的文件内容，或是确认某个文件是否存在等"
 }
 
 func (l *LocalFileReader) Examples() []string {
-	return []string{"local_file_reader(.) // 获得根目录想所有文件", "local_file_reader(./README.md) // 读取 README.md 中的内容"}
+	return []string{
+		"local_file_reader(.) // 获得根目录下文件列表",
+		"local_file_reader(./bots) // 获得子目录下所有文件列表",
+		"local_file_reader(./README.md) // 读取 README.md 这个文件中的内容",
+	}
 }
 
 func (l *LocalFileReader) ParamNames() []string {
@@ -58,8 +64,10 @@ func (l *LocalFileReader) Execute(param map[string]string) (any, error) {
 	}
 
 	if info.IsDir() {
+		fmt.Printf("read directory: %s\n", path)
 		return l.readDirectory(path)
 	} else {
+		fmt.Printf("read file: %s\n", path)
 		return l.readFile(path, info.Size())
 	}
 }
@@ -78,7 +86,7 @@ func (l *LocalFileReader) readDirectory(path string) ([]map[string]any, error) {
 			return nil, err
 		}
 		fileInfos = append(fileInfos, map[string]any{
-			"name":  info.Name(),
+			"path":  filepath.Join(path, info.Name()),
 			"isDir": info.IsDir(),
 		})
 	}
