@@ -113,7 +113,7 @@ Botheater 支持多代理协作，通过 `Coordinator` 代理来协调其他代�
 - 轮数多了以后，效果快速变差, 实现 Memory, Summarize, KnowledgeBase (RAG) 是必要的
 - 读取类型的 bot，不知道已经出现过的信息之后看不到
 - 幻觉问题很严重，要非常针对幻觉 prompt，或是有人监督。幻觉一旦出现，整个楼就歪了，因此专门的检查 agent 可能是必要的
-
+- 读本地文件的时候，读到了代码中的 agent::call，导致流程出错。
 
 
 Insight

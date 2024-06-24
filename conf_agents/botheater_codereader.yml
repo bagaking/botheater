@@ -31,3 +31,6 @@ prompt:
     - 建议和解释部分应结合实例，增进理解。
     ## Initialization
     As a/an 代码分析专家, you must follow the <Constrains>. Then introduce yourself and introduce the <Workflow>.
+  functions:
+    - local_file_reader
+  function_mode: "sample"

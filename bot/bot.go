@@ -101,6 +101,7 @@ func (b *Bot) NormalReq(ctx context.Context, mergedHistory history.Messages) (st
 	if err != nil {
 		return "", irr.Wrap(err, "execute functions failed")
 	}
+	// todo: 还是只在有函数的时候才做这个记录? 因为其他情况下都会回到原始上下文
 	if len(tempMessages) > 0 && b.Config.Prompt.FunctionMode == FunctionModeSampleOnly {
 		summarize, err := b.Summarize(ctx, tempMessages)
 		if err != nil {
@@ -109,7 +110,7 @@ func (b *Bot) NormalReq(ctx context.Context, mergedHistory history.Messages) (st
 		got = fmt.Sprintf("#结论\n%s\n\n#过程\n%s\n", got, summarize) // todo: 测试中的机制, sample 模式下, 保留这些结论
 		b.localHistory.Items = history.PushFunctionCallMSG(
 			b.localHistory.Items,
-			fmt.Sprintf("btw, 可以参考之前的结论: %s\n继续回答问题\n\n", summarize),
+			fmt.Sprintf("btw, 可以参考之前的结论: %s\n继续回答问题\n\n", got),
 		)
 	}
 
@@ -130,8 +131,8 @@ func (b *Bot) ExecuteFunctions(ctx context.Context, historyBeforeFunctionCall hi
 					TopRight:    "🌲",
 					BottomLeft:  "🌲",
 					BottomRight: "🌲",
-					Horizontal:  "-",
-					Vertical:    "|",
+					Horizontal:  "┉",
+					Vertical:    "┋",
 					LiteLevel:   1,
 				}),
 		)
