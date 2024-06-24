@@ -101,12 +101,16 @@ func (b *Bot) NormalReq(ctx context.Context, mergedHistory history.Messages) (st
 	if err != nil {
 		return "", irr.Wrap(err, "execute functions failed")
 	}
-	if b.Config.Prompt.FunctionMode == FunctionModeSampleOnly {
+	if len(tempMessages) > 0 && b.Config.Prompt.FunctionMode == FunctionModeSampleOnly {
 		summarize, err := b.Summarize(ctx, tempMessages)
 		if err != nil {
 			log.WithError(err).Warn("summarize failed")
 		}
-		got = fmt.Sprintf("#结论\n%s\n\n#过程\n%s\n", got, summarize)
+		got = fmt.Sprintf("#结论\n%s\n\n#过程\n%s\n", got, summarize) // todo: 测试中的机制, sample 模式下, 保留这些结论
+		b.localHistory.Items = history.PushFunctionCallMSG(
+			b.localHistory.Items,
+			fmt.Sprintf("btw, 可以参考之前的结论: %s\n继续回答问题\n\n", summarize),
+		)
 	}
 
 	return got, nil
@@ -118,10 +122,18 @@ func (b *Bot) ExecuteFunctions(ctx context.Context, historyBeforeFunctionCall hi
 	// 如果没有新的函数调用，则将 trigger返回，否则将 trigger 推入临时队列
 	if !tool.Caller.HasCall(trigger) {
 		// 如果没有后续的函数调用就 **直接返回**
-		log.Info(
+		log.Infof("\n%s",
 			utils.SPrintWithFrameCard(
 				fmt.Sprintf("agent %s - %s，depth= %d, 不调用任何 Function 直接给出响应", b.PrefabName, b.UUID, stackDepth),
-				trigger, 128, utils.SimpleStyle),
+				trigger, 128, utils.FrameStyle{
+					TopLeft:     "🌲",
+					TopRight:    "🌲",
+					BottomLeft:  "🌲",
+					BottomRight: "🌲",
+					Horizontal:  "-",
+					Vertical:    "|",
+					LiteLevel:   1,
+				}),
 		)
 		return trigger, nil
 	} else {

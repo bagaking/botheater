@@ -88,7 +88,7 @@ func NewSystemMsg(content, identity string) *Message {
 // PushFunctionCallMSG 将 Function 调用结果推入消息栈
 // 如果栈头是驱动指令 MSGFunctionContinue，则弹出
 // 如果栈头是 Tools 调用，则与之 merge
-func PushFunctionCallMSG(msgs []*Message, insertions ...string) []*Message {
+func PushFunctionCallMSG(msgs Messages, insertions ...string) Messages {
 	for _, cmd := range insertions {
 		mCall := NewBotMsg(cmd, tool.Caller.Prefix)
 

@@ -37,6 +37,11 @@ func main() {
 
 	conf := LoadConf(ctx)
 
+	botCoordinator, err := conf.NewBot(ctx, "botheater_coordinator", tm)
+	if err != nil {
+		log.WithError(err).Fatalf("create botheater_coordinator failed")
+	}
+
 	botBasic, err := conf.NewBot(ctx, "botheater_basic", tm)
 	if err != nil {
 		log.WithError(err).Fatalf("create botBasic failed")
@@ -52,18 +57,18 @@ func main() {
 		log.WithError(err).Fatalf("create botheater_searcher failed")
 	}
 
-	botCoordinator, err := conf.NewBot(ctx, "botheater_coordinator", tm)
-	if err != nil {
-		log.WithError(err).Fatalf("create botheater_coordinator failed")
-	}
-
 	botSearcher, err := conf.NewBot(ctx, "botheater_searcher", tm)
 	if err != nil {
 		log.WithError(err).Fatalf("create botheater_searcher failed")
 	}
 
+	botCodeReader, err := conf.NewBot(ctx, "botheater_codereader", tm)
+	if err != nil {
+		log.WithError(err).Fatalf("create botheater_codereader failed")
+	}
+
 	bots := []*bot.Bot{
-		botCoordinator, botFileReader, botBasic, botSearcher, botFileSearcher,
+		botCoordinator, botBasic, botSearcher, botFileSearcher, botFileReader, botCodeReader,
 	}
 
 	bot.InitAllActAs(ctx, bots...)
@@ -88,7 +93,8 @@ func main() {
 	// MultiAgentChat(ctx, h, "什么是vector_database", bots...)
 
 	// MultiAgentChat(ctx, h, "找到现在这个本地仓库 util 里在把文字 format 成卡片格式的原理具体实现原理和用法，然后参照任意 github 的 readme 格式，写一份 README.md 介绍功能的原理和具体用法", bots...)
-	MultiAgentChat(ctx, h, "现在这个本地仓库中的框架，能够确保 agent 很好的调用 functions，看看这是怎么做到的？这里的设计有什么读独到之处？", bots...)
+	// MultiAgentChat(ctx, h, "现在这个本地仓库中的框架，能够确保 agent 很好的调用 functions，看看这是怎么做到的？这里的设计有什么读独到之处？", bots...)
+	MultiAgentChat(ctx, h, "找到现在这个本地仓库中 bot 的实现代码，然后对 bot 的实现思路进行总结", bots...)
 	// MultiAgentChat(ctx, h, "总结之前聊天里，你的观点, 以及用于佐证的代码", botCoordinator) //
 	// MultiAgentChat(ctx, h, "针对这些代码进行改写，使其更优雅，要注意不要重复造轮子", botBasic)
 }
