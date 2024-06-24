@@ -82,17 +82,12 @@ func (b *Bot) Messages(ctx context.Context, globalHistory *history.History) hist
 }
 
 // NormalReq 递归结构，会处理函数调用，不会改变 History
-func (b *Bot) NormalReq(ctx context.Context, staticMessages history.Messages, tempMessages *history.Messages, depth int) (string, error) {
+func (b *Bot) NormalReq(ctx context.Context, mergedHistory history.Messages) (string, error) {
 	log, ctx := b.Logger(ctx, "normal_req")
 
-	if tempMessages == nil {
-		tl := make(history.Messages, 0)
-		tempMessages = &tl
-	}
-
-	got, err := b.driver.Chat(ctx, append(staticMessages, *tempMessages...))
+	got, err := b.driver.Chat(ctx, mergedHistory)
 	if err != nil {
-		return "", irr.Wrap(err, "normal req failed, depth= %d", depth)
+		return "", irr.Wrap(err, "normal req failed")
 	}
 
 	got = strings.TrimSpace(got)
@@ -100,32 +95,80 @@ func (b *Bot) NormalReq(ctx context.Context, staticMessages history.Messages, te
 		return b.PrefabName + " 开小差了，请重试", nil
 	}
 
-	// 如果没有后续的函数调用就 **直接返回**
-	if !tool.Caller.HasCall(got) {
-		log.Infof("-- 在 depth= %d 的调用中，agent 不调用任何 Function 直接给出响应：`%s`", depth, got)
-		return got, nil
+	tempMessages := make(history.Messages, 0) // 创建函数调用过程的临时队列
+	log.Debugf("try execute functions")
+	got, err = b.ExecuteFunctions(ctx, mergedHistory, &tempMessages, got, 0)
+	if err != nil {
+		return "", irr.Wrap(err, "execute functions failed")
+	}
+	if b.Config.Prompt.FunctionMode == FunctionModeSampleOnly {
+		summarize, err := b.Summarize(ctx, tempMessages)
+		if err != nil {
+			log.WithError(err).Warn("summarize failed")
+		}
+		got = fmt.Sprintf("#结论\n%s\n\n#过程\n%s\n", got, summarize)
+	}
+
+	return got, nil
+}
+
+func (b *Bot) ExecuteFunctions(ctx context.Context, historyBeforeFunctionCall history.Messages, tempMessages *history.Messages, trigger string, stackDepth int) (string, error) {
+	log, ctx := b.Logger(ctx, "execute_functions")
+
+	// 如果没有新的函数调用，则将 trigger返回，否则将 trigger 推入临时队列
+	if !tool.Caller.HasCall(trigger) {
+		// 如果没有后续的函数调用就 **直接返回**
+		log.Info(
+			utils.SPrintWithFrameCard(
+				fmt.Sprintf("agent %s - %s，depth= %d, 不调用任何 Function 直接给出响应", b.PrefabName, b.UUID, stackDepth),
+				trigger, 128, utils.SimpleStyle),
+		)
+		return trigger, nil
+	} else {
+		// 考虑 trigger 是否要包含在临时队列，目前看效果不错
+		*tempMessages = history.PushFunctionCallMSG(*tempMessages, trigger)
 	}
 
 	// 还有函数调用则进入递归 todo: 处理一次有多个的情况
-	funcName, paramValues, err := tool.Caller.ParseCall(ctx, got)
-	callResult := ""
+	funcName, paramValues, err := tool.Caller.ParseCall(ctx, trigger)
+	functionReturns := ""
 	if err != nil {
 		log.WithError(err).Warnf("failed to parse function call")
-		callResult = err.Error() + "，请检查后重试"
+		functionReturns = err.Error() + "，请检查后重试"
 	} else {
 		result := b.tm.Execute(ctx, funcName, paramValues)
-		callResult = result.ToPrompt()
+		functionReturns = result.ToPrompt()
 		// todo：要求错误修正的 prompt 在最终正确后可以去掉
 	}
 
-	// 在临时栈中操作
-	*tempMessages = history.PushFunctionCallMSG(*tempMessages, callResult)
+	// 将执行结果推入临时栈
+	*tempMessages = history.PushFunctionCallMSG(*tempMessages, functionReturns) // 将函数调用结果推入临时队列
+
+	req := append(historyBeforeFunctionCall, *tempMessages...)
+	req = append(req, history.MSGFunctionContinue) // 注入驱动指令
+	got, err := b.driver.Chat(ctx, req)
+	if err != nil {
+		return "", irr.Wrap(err, "function call failed, depth= %d", stackDepth)
+	}
 
 	log.Infof("\n%s\n", utils.SPrintWithCallStack(
-		fmt.Sprintf("<-- function call stack [%d] --> %s(%v)", depth, funcName, strings.Join(paramValues, ", ")),
-		callResult, 120))
+		fmt.Sprintf("<-- function call stack [%d] --> %s(%v)", stackDepth, funcName, strings.Join(paramValues, ", ")),
+		functionReturns, 120))
 
-	return b.NormalReq(ctx, staticMessages, tempMessages, depth+1)
+	return b.ExecuteFunctions(ctx, historyBeforeFunctionCall, tempMessages, got, stackDepth+1)
+}
+
+func (b *Bot) Summarize(ctx context.Context, messages2Summary history.Messages) (string, error) {
+	log, ctx := b.Logger(ctx, "summarize")
+
+	req := append(messages2Summary, history.MSGFunctionSummarize) // 注入驱动指令
+	got, err := b.driver.Chat(ctx, req)
+	if err != nil {
+		return "", irr.Wrap(err, "summarize failed")
+	}
+
+	log.Infof("\n%s\n", utils.SPrintWithCallStack("<-- function summarize-->", got, 120))
+	return got, nil
 }
 
 // Question - 只是一个和 bot 聊天的快捷方式
@@ -138,8 +181,7 @@ func (b *Bot) SendChat(ctx context.Context, globalHistory *history.History) (str
 	log, ctx := b.Logger(ctx, "send_chat")
 	// 创建临时聊天队列
 	messages := b.Messages(ctx, globalHistory)
-	tempMessages := make(history.Messages, 0) // 要保存结果就在调用前创建，不保存的话就是不保留 function 调用过程的模式
-	got, err := b.NormalReq(ctx, messages, &tempMessages, 0)
+	got, err := b.NormalReq(ctx, messages)
 	if err != nil {
 		log.WithError(err).Error("normal chat failed")
 	}

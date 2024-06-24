@@ -41,6 +41,8 @@ func_call::search(\"用户的问题\")
 	FunctionModePrivateOnly FunctionMode = "private"
 	// FunctionModeSampleOnly 采样模式, 要求 agent 将 function 调用总结成 sample，只有 sample 会到原始上下文
 	FunctionModeSampleOnly FunctionMode = "sample"
+	// FunctionModeDump 复制模式, 将这个过程携带在返回中
+	FunctionModeDump FunctionMode = "dump"
 )
 
 // 获取函数信息

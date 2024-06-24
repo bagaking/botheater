@@ -55,8 +55,7 @@ var (
 		Vertical:    "│",
 		TitlePrefix: "🔍 ",
 		LinePrefix:  "",
-
-		LiteLevel: 1,
+		LiteLevel:   1,
 	}
 
 	StyMsgCard = FrameStyle{
@@ -78,6 +77,7 @@ func SPrintWithCallStack(title, content string, maxWidth int) string {
 	return SPrintWithFrameCard(title, content, maxWidth, StyFunctionStack)
 }
 
+// SPrintWithMsgCard 打印 msg 栈中的单个消息
 func SPrintWithMsgCard(title, content string, maxWidth int) string {
 	return SPrintWithFrameCard(title, content, maxWidth, StyMsgCard)
 }
@@ -104,23 +104,27 @@ func SPrintWithFrameCard(title, content string, maxWidth int, style FrameStyle) 
 	frame := ""
 	switch style.LiteLevel {
 	case 0:
+		titleRepeat := maxLength + lineNumberWidth + 3 - runewidth.StringWidth(style.TitlePrefix+title)
+		if titleRepeat < 0 {
+			titleRepeat = 0
+		}
 		titleHead := fmt.Sprintf("%s%s%s\n", style.TopLeft, border, style.TopRight)
 		titleLine := fmt.Sprintf("%s %s%s %s%s\n",
 			style.Vertical,
 			style.TitlePrefix, title,
-			strings.Repeat(" ", maxLength+lineNumberWidth+3-runewidth.StringWidth(style.TitlePrefix+title)), style.Vertical, // 3 = ' | '
+			strings.Repeat(" ", titleRepeat), style.Vertical, // 3 = ' | '
 		)
 		titleGround := fmt.Sprintf("%s%s%s\n", style.Vertical, border, style.Vertical)
 		frame = titleHead + titleLine + titleGround
 	default:
-		repeat := maxLength + lineNumberWidth + 2 - runewidth.StringWidth(style.TitlePrefix+title)
-		if repeat < 0 {
-			repeat = 0
+		titleRepeat := maxLength + lineNumberWidth + 2 - runewidth.StringWidth(style.TitlePrefix+title)
+		if titleRepeat < 0 {
+			titleRepeat = 0
 		}
 		titleLine := fmt.Sprintf("%s%s %s%s %s%s\n",
 			style.TopLeft, style.Horizontal,
 			style.TitlePrefix, title,
-			strings.Repeat(style.Horizontal, repeat), style.TopRight, // 3 = ' | '
+			strings.Repeat(style.Horizontal, titleRepeat), style.TopRight, // 3 = ' | '
 		)
 		frame = titleLine
 	}
