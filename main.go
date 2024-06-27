@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/sirupsen/logrus"
 
@@ -92,44 +89,46 @@ func main() {
 
 	// MultiAgentChat(ctx, h, "什么是vector_database", bots...)
 
+	MultiAgentChat(ctx, h, "找到现在这个本地仓库 util 里在带框架卡片具体实现原理和用法，然后参照任意 github 的 readme 格式，写一份 README.md 介绍功能的原理和具体用法", bots...)
 	// MultiAgentChat(ctx, h, "找到现在这个本地仓库 util 里在把文字 format 成卡片格式的原理具体实现原理和用法，然后参照任意 github 的 readme 格式，写一份 README.md 介绍功能的原理和具体用法", bots...)
-	// MultiAgentChat(ctx, h, "现在这个本地仓库中的框架，能够确保 agent 很好的调用 functions，看看这是怎么做到的？这里的设计有什么读独到之处？", bots...)
-	MultiAgentChat(ctx, h, "找到现在这个本地仓库中 bot 的实现代码，然后对 bot 的实现思路进行总结", bots...)
+	// MultiAgentChat(ctx, h, "现在这个本地仓库中的框架，能够确保 agent 很好的调用 functions，看看这是怎么做到的？这里的设计有什么独到之处？然后上网看看有没有类似的实现", bots...)
+	// MultiAgentChat(ctx, h, "找到现在这个本地仓库中 bot 的实现代码，然后对 bot 的实现思路进行总结", bots...)
 	// MultiAgentChat(ctx, h, "总结之前聊天里，你的观点, 以及用于佐证的代码", botCoordinator) //
 	// MultiAgentChat(ctx, h, "针对这些代码进行改写，使其更优雅，要注意不要重复造轮子", botBasic)
 }
 
-func TestNormalChat(ctx context.Context, b *bot.Bot, question string) {
-	log := wlog.ByCtx(ctx, "TestNormalChat")
-	h := history.NewHistory()
-	resp, err := b.Question(ctx, h, question)
-	if err != nil {
-		log.WithError(err).Errorf("chat failed")
-	}
-
-	log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", resp)
-}
-
-func TestContinuousChat(ctx context.Context, b *bot.Bot) {
-	log := wlog.ByCtx(ctx, "TestContinuousChat")
-	reader := bufio.NewReader(os.Stdin)
-
-	for {
-		fmt.Print("Enter your question: ")
-		question, _ := reader.ReadString('\n')
-		question = question[:len(question)-1] // 去掉换行符
-
-		h := history.NewHistory()
-		got, err := b.Question(ctx, h, question)
-		if err != nil {
-			log.WithError(err).Errorf("chat failed")
-			continue
-		}
-
-		log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", got)
-
-	}
-}
+//
+//func TestNormalChat(ctx context.Context, b *bot.Bot, question string) {
+//	log := wlog.ByCtx(ctx, "TestNormalChat")
+//	h := history.NewHistory()
+//	resp, err := b.Question(ctx, h, question)
+//	if err != nil {
+//		log.WithError(err).Errorf("chat failed")
+//	}
+//
+//	log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", resp)
+//}
+//
+//func TestContinuousChat(ctx context.Context, b *bot.Bot) {
+//	log := wlog.ByCtx(ctx, "TestContinuousChat")
+//	reader := bufio.NewReader(os.Stdin)
+//
+//	for {
+//		fmt.Print("Enter your question: ")
+//		question, _ := reader.ReadString('\n')
+//		question = question[:len(question)-1] // 去掉换行符
+//
+//		h := history.NewHistory()
+//		got, err := b.Question(ctx, h, question)
+//		if err != nil {
+//			log.WithError(err).Errorf("chat failed")
+//			continue
+//		}
+//
+//		log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", got)
+//
+//	}
+//}
 
 //func TestStreamChat(ctx context.Context, b *bot.Bot, question string) {
 //	log := wlog.ByCtx(ctx, "TestNormalChat")

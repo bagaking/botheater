@@ -8,6 +8,11 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
+const (
+	PrintWidthL1 = 110
+	PrintWidthL2 = 96
+)
+
 // FrameStyle 定义框架样式
 type FrameStyle struct {
 	TopLeft     string
@@ -24,53 +29,26 @@ type FrameStyle struct {
 
 // 预定义的样式
 var (
-	SimpleStyle = FrameStyle{
-		TopLeft:     "╔",
-		TopRight:    "╗",
-		BottomLeft:  "╚",
-		BottomRight: "╝",
-		Horizontal:  "═",
-		Vertical:    "║",
-		TitlePrefix: "",
-		LinePrefix:  "",
-	}
-
-	StyTalk = FrameStyle{
-		TopLeft:     "╔",
-		TopRight:    "╗",
-		BottomLeft:  "╚",
-		BottomRight: "╝",
-		Horizontal:  "═",
-		Vertical:    "║",
-		TitlePrefix: "🚗 ",
-		LinePrefix:  "",
-	}
-
-	StyFunctionStack = FrameStyle{
-		TopLeft:     "┌",
-		TopRight:    "┐",
-		BottomLeft:  "└",
-		BottomRight: "┘",
-		Horizontal:  "─",
-		Vertical:    "│",
-		TitlePrefix: "🔍 ",
-		LinePrefix:  "",
-		LiteLevel:   1,
-	}
-
-	StyMsgCard = FrameStyle{
-		TopLeft:     "┌",
-		TopRight:    "┐",
-		BottomLeft:  "└",
-		BottomRight: "┘",
-		Horizontal:  "─",
-		Vertical:    "│",
-		TitlePrefix: "",
-		LinePrefix:  "",
-
-		LiteLevel: 2,
-	}
+	StyConclusion    = CreateStyle("╔", "╗", "╚", "╝", "║", "═", "🎉🎉 ", "", 0)
+	StyTalk          = CreateStyle("╔", "╗", "╚", "╝", "║", "═", "🚗 ", "", 0)
+	StyNoFuncResult  = CreateStyle("┌", "┐", "└", "┘", "│", "─", "🌲 ", "", 1)
+	StyFunctionStack = CreateStyle("┌", "┐", "└", "┘", "│", "─", "🔍 ", "", 1)
+	StyMsgCard       = CreateStyle("┌", "┐", "└", "┘", "│", "─", "✉ ", "", 2)
 )
+
+func CreateStyle(lt, rt, lb, rb, v, h, titlePrefix, linePrefix string, level uint8) FrameStyle {
+	return FrameStyle{
+		TopLeft:     lt,
+		TopRight:    rt,
+		BottomLeft:  lb,
+		BottomRight: rb,
+		Vertical:    v,
+		Horizontal:  h,
+		TitlePrefix: titlePrefix,
+		LinePrefix:  linePrefix,
+		LiteLevel:   level,
+	}
+}
 
 // SPrintWithCallStack 打印函数调用栈
 func SPrintWithCallStack(title, content string, maxWidth int) string {
@@ -89,6 +67,7 @@ func SPrintWithFrameCard(title, content string, maxWidth int, style FrameStyle) 
 	maxLength := runewidth.StringWidth(style.TitlePrefix + title)
 	for i := range lines {
 		lines[i] = strings.TrimRightFunc(lines[i], unicode.IsSpace)
+		lines[i] = strings.Replace(lines[i], "\t", "  ", -1)
 		lineLength := runewidth.StringWidth(lines[i])
 		if lineLength > maxLength {
 			maxLength = lineLength
@@ -101,7 +80,7 @@ func SPrintWithFrameCard(title, content string, maxWidth int, style FrameStyle) 
 	lineNumberWidth := len(fmt.Sprintf("%d", len(lines)))
 	border := strings.Repeat(style.Horizontal, maxLength+lineNumberWidth+5)
 
-	frame := ""
+	frame := "\n"
 	switch style.LiteLevel {
 	case 0:
 		titleRepeat := maxLength + lineNumberWidth + 3 - runewidth.StringWidth(style.TitlePrefix+title)
@@ -148,7 +127,7 @@ func SPrintWithFrameCard(title, content string, maxWidth int, style FrameStyle) 
 		frame += fmt.Sprintf("%s%s%s\n", style.BottomLeft, border, style.BottomRight)
 	}
 
-	return frame
+	return frame + "\n"
 }
 
 func wrapText(text string, maxWidth int) string {

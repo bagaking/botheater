@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bagaking/botheater/utils"
+
 	"github.com/bagaking/goulp/wlog"
 	"github.com/khicago/got/util/typer"
 
@@ -34,6 +36,7 @@ func MultiAgentChat(ctx context.Context, h *history.History, question string, bo
 
 	h.EnqueueUserMsg(question)
 
+	answer := ""
 	for i := 0; i < MaxRound; i++ {
 		log = log.WithField("round", i)
 		if bCur == nil {
@@ -49,7 +52,8 @@ func MultiAgentChat(ctx context.Context, h *history.History, question string, bo
 			h.EnqueueAssistantMsg(content, bCur.PrefabName)
 		}
 
-		log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", content)
+		log.Infof("=== chat answer round %d ===\n\n%s=== chat answer ===\n\n", i+1, content)
+		answer = content
 		// continue chat
 		if bot.Caller.HasCall(content) { // 任何有指名 agent 的情况，都调用
 			agentName, params, err := bot.Caller.ParseCall(ctx, content)
@@ -119,4 +123,7 @@ func MultiAgentChat(ctx context.Context, h *history.History, question string, bo
 		bCur = bCoordinate
 		log.Infof("back to coordinate")
 	}
+
+	log.Infof("\n%s\n",
+		utils.SPrintWithFrameCard("CHAT ANSWER", answer, utils.PrintWidthL1, utils.StyConclusion))
 }

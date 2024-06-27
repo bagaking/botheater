@@ -30,8 +30,13 @@ func Msg2Str(ind int, msg *api.Message) string {
 		content = "!!got-empty-content!! all msg is:\n" + jsonex.MustMarshalToString(msg)
 	}
 
-	return utils.SPrintWithMsgCard(fmt.Sprintf("--- %d. name[%s] (len:%d)---", ind, msg.Name, len(content)), content, 110)
-	// return utils.SPrintWithMsgCard(fmt.Sprintf("--- %d. role[%s] name[%s] (len:%d) ---", ind, msg.Role, msg.Name, len(content)), content, 110)
+	// return utils.SPrintWithMsgCard(fmt.Sprintf("--- %d. name[%s] (len:%d)---", ind, msg.Name, len(content)), content, 86)
+	return utils.SPrintWithFrameCard(
+		fmt.Sprintf(" %d. role[%s] name[%s] (len:%d)", ind, msg.Role, msg.Name, len(content)),
+		content,
+		utils.PrintWidthL2,
+		utils.StyMsgCard,
+	)
 }
 
 func Resp2Str(resp *api.ChatResp) string {

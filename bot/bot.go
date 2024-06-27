@@ -66,9 +66,13 @@ func (b *Bot) Logger(ctx context.Context, funcName string) (*logrus.Entry, conte
 	return log.Entry, ctx
 }
 
-func (b *Bot) MakeSystemMessage(ctx context.Context) *history.Message {
+func (b *Bot) MakeSystemMessage(ctx context.Context, appends ...string) *history.Message {
 	ctx = utils.InjectAgentLogKey(ctx, b.PrefabName)
-	return b.Prompt.BuildSystemMessage(ctx, b.tm).AppendContent(b.ActAsContext)
+	msg := b.Prompt.BuildSystemMessage(ctx, b.tm).AppendContent(b.ActAsContext)
+	for _, apd := range appends {
+		msg = msg.AppendContent(apd)
+	}
+	return msg
 }
 
 func (b *Bot) Messages(ctx context.Context, globalHistory *history.History) history.Messages {
@@ -97,53 +101,74 @@ func (b *Bot) NormalReq(ctx context.Context, mergedHistory history.Messages) (st
 
 	tempMessages := make(history.Messages, 0) // 创建函数调用过程的临时队列
 	log.Debugf("try execute functions")
-	got, err = b.ExecuteFunctions(ctx, mergedHistory, &tempMessages, got, 0)
+	got, err = b.ExecuteFunctions(ctx, mergedHistory, got, &tempMessages)
 	if err != nil {
 		return "", irr.Wrap(err, "execute functions failed")
 	}
+
+	if len(tempMessages) <= 0 || b.Config.Prompt.FunctionMode != FunctionModeSampleOnly {
+		return got, nil
+	}
+
 	// todo: 还是只在有函数的时候才做这个记录? 因为其他情况下都会回到原始上下文
-	if len(tempMessages) > 0 && b.Config.Prompt.FunctionMode == FunctionModeSampleOnly {
-		summarize, err := b.Summarize(ctx, tempMessages)
-		if err != nil {
-			log.WithError(err).Warn("summarize failed")
-		}
-		got = fmt.Sprintf("#结论\n%s\n\n#过程\n%s\n", got, summarize) // todo: 测试中的机制, sample 模式下, 保留这些结论
-		b.localHistory.Items = history.PushFunctionCallMSG(
+	summarize, err := b.Summarize(ctx, append(tempMessages, history.NewBotMsg(got, b.PrefabName)))
+	if err != nil {
+		log.WithError(err).Warn("summarize failed")
+	} else {
+		got = fmt.Sprintf("# 结论\n%s\n\n# 过程\n%s\n", got, summarize) // todo: 测试中的机制, sample 模式下, 保留这些结论
+		b.localHistory.Items = history.PushFunctionResultMSG(
 			b.localHistory.Items,
 			fmt.Sprintf("btw, 可以参考之前的结论: %s\n继续回答问题\n\n", got),
 		)
 	}
-
 	return got, nil
 }
 
-func (b *Bot) ExecuteFunctions(ctx context.Context, historyBeforeFunctionCall history.Messages, tempMessages *history.Messages, trigger string, stackDepth int) (string, error) {
-	log, ctx := b.Logger(ctx, "execute_functions")
-
+func (b *Bot) ExecuteFunctions(ctx context.Context, historyBeforeFunctionCall history.Messages, trigger string, tempMessages *history.Messages) (string, error) {
+	log, ctx := b.Logger(ctx, "E")
 	// 如果没有新的函数调用，则将 trigger返回，否则将 trigger 推入临时队列
 	if !tool.Caller.HasCall(trigger) {
 		// 如果没有后续的函数调用就 **直接返回**
 		log.Infof("\n%s",
 			utils.SPrintWithFrameCard(
-				fmt.Sprintf("agent %s - %s，depth= %d, 不调用任何 Function 直接给出响应", b.PrefabName, b.UUID, stackDepth),
-				trigger, 128, utils.FrameStyle{
-					TopLeft:     "🌲",
-					TopRight:    "🌲",
-					BottomLeft:  "🌲",
-					BottomRight: "🌲",
-					Horizontal:  "┉",
-					Vertical:    "┋",
-					LiteLevel:   1,
-				}),
+				fmt.Sprintf("agent %s response with no func calls", b.PrefabName),
+				trigger, utils.PrintWidthL1, utils.StyNoFuncResult),
 		)
 		return trigger, nil
-	} else {
-		// 考虑 trigger 是否要包含在临时队列，目前看效果不错
-		*tempMessages = history.PushFunctionCallMSG(*tempMessages, trigger)
 	}
 
+	if tempMessages == nil {
+		l := make(history.Messages, 0)
+		tempMessages = &l
+	}
+
+	reqHistory := make(history.Messages, 0)
+	if b.Config.Prompt.FunctionCtx == FunctionCtxAll {
+		reqHistory = append(reqHistory, historyBeforeFunctionCall...)
+	} else {
+		reqHistory = append(reqHistory, b.MakeSystemMessage(ctx))
+
+		introduce, err := b.Introduce(ctx, historyBeforeFunctionCall)
+		if err != nil {
+			log.WithError(err).Warn("introduce failed")
+		} else {
+			reqHistory = append(reqHistory, history.NewUserMsg(introduce, b.PrefabName))
+		}
+	}
+
+	return b.executeFunctions(ctx, historyBeforeFunctionCall, tempMessages, trigger, 0)
+}
+
+func (b *Bot) executeFunctions(ctx context.Context, reqHistory history.Messages, tempMessages *history.Messages, funcCallMessage string, stackDepth int) (string, error) {
+	log, ctx := b.Logger(ctx, fmt.Sprintf("ef-%d", stackDepth))
+
+	// 考虑 trigger 是否要包含在临时队列，目前看效果不错
+	//*tempMessages = append(*tempMessages, history.NewUserMsg(trigger, b.PrefabName))
+	//history.PushFunctionResultMSG(*tempMessages, trigger) // 用 function 身份就看不懂需求了
+	*tempMessages = append(*tempMessages, history.NewBotMsg(funcCallMessage, b.PrefabName))
+
 	// 还有函数调用则进入递归 todo: 处理一次有多个的情况
-	funcName, paramValues, err := tool.Caller.ParseCall(ctx, trigger)
+	funcName, paramValues, err := tool.Caller.ParseCall(ctx, funcCallMessage)
 	functionReturns := ""
 	if err != nil {
 		log.WithError(err).Warnf("failed to parse function call")
@@ -155,32 +180,65 @@ func (b *Bot) ExecuteFunctions(ctx context.Context, historyBeforeFunctionCall hi
 	}
 
 	// 将执行结果推入临时栈
-	*tempMessages = history.PushFunctionCallMSG(*tempMessages, functionReturns) // 将函数调用结果推入临时队列
+	*tempMessages = history.PushFunctionResultMSG(*tempMessages, functionReturns) // 将函数调用结果推入临时队列
 
-	req := append(historyBeforeFunctionCall, *tempMessages...)
-	req = append(req, history.MSGFunctionContinue) // 注入驱动指令
+	req := append(make(history.Messages, 0), reqHistory...) // 注入当前历史
+	req = append(req, *tempMessages...)                     // 注入临时指令
+	req = append(req, history.MSGFunctionContinue)          // 注入驱动指令
+
 	got, err := b.driver.Chat(ctx, req)
 	if err != nil {
 		return "", irr.Wrap(err, "function call failed, depth= %d", stackDepth)
 	}
 
-	log.Infof("\n%s\n", utils.SPrintWithCallStack(
-		fmt.Sprintf("<-- function call stack [%d] --> %s(%v)", stackDepth, funcName, strings.Join(paramValues, ", ")),
-		functionReturns, 120))
+	log.Infof(
+		utils.SPrintWithFrameCard(
+			fmt.Sprintf("<-- function call stack --> %s(%v) [%d]", funcName, strings.Join(paramValues, ", "), stackDepth),
+			functionReturns,
+			utils.PrintWidthL1,
+			utils.StyFunctionStack,
+		),
+	)
 
-	return b.ExecuteFunctions(ctx, historyBeforeFunctionCall, tempMessages, got, stackDepth+1)
+	// 如果没有后续的函数调用就 **直接返回**，否则使用 got 继续调用
+	if !tool.Caller.HasCall(got) {
+		return got, nil
+	}
+	log.WithField("stackDepth", stackDepth).Debugf("find function call, trigger= %s", got)
+
+	return b.executeFunctions(ctx, reqHistory, tempMessages, got, stackDepth+1)
 }
 
 func (b *Bot) Summarize(ctx context.Context, messages2Summary history.Messages) (string, error) {
 	log, ctx := b.Logger(ctx, "summarize")
 
-	req := append(messages2Summary, history.MSGFunctionSummarize) // 注入驱动指令
+	req := append(make(history.Messages, 0), b.MakeSystemMessage(ctx, `
+# 补充说明
+完成所有函数调用后，你会进行总结。
+总结必须包括直接结论和足够多的支撑细节，不要遗漏关键信息。
+总结时，你必须先回顾整个过程和结论，对其中错误的地方先进行修正，然后进行总结。
+`))
+	req = append(req, messages2Summary...)
+	req = append(req, history.MSGFunctionSummarize) // 注入驱动指令
 	got, err := b.driver.Chat(ctx, req)
 	if err != nil {
 		return "", irr.Wrap(err, "summarize failed")
 	}
 
-	log.Infof("\n%s\n", utils.SPrintWithCallStack("<-- function summarize-->", got, 120))
+	log.Infof("\n%s\n", utils.SPrintWithCallStack("<-- function summarize-->", got, utils.PrintWidthL2))
+	return got, nil
+}
+
+func (b *Bot) Introduce(ctx context.Context, historyMessages history.Messages) (string, error) {
+	log, ctx := b.Logger(ctx, "introduce")
+
+	req := append(historyMessages, history.MSGFunctionIntroduce) // 注入驱动指令
+	got, err := b.driver.Chat(ctx, req)
+	if err != nil {
+		return "", irr.Wrap(err, "summarize failed")
+	}
+
+	log.Infof("\n%s\n", utils.SPrintWithCallStack("<-- function introduce -->", got, utils.PrintWidthL2))
 	return got, nil
 }
 

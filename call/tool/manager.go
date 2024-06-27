@@ -12,7 +12,10 @@ import (
 	"github.com/bagaking/botheater/call"
 )
 
-var Caller = &call.Caller{Prefix: CallPrefix, Regex: regexp.MustCompile(`func_call::(\w+)\((.*?)\)`)}
+var Caller = &call.Caller{
+	Prefix: CallPrefix,
+	Regex:  regexp.MustCompile(`func_call::(\w+)\((.*?)\)`),
+}
 
 const CallPrefix = "func_call::"
 

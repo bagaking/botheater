@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/bagaking/goulp/wlog"
 	"github.com/khicago/irr"
@@ -12,6 +13,7 @@ import (
 )
 
 type (
+	FunctionCtx  string
 	FunctionMode string
 
 	Prompt struct {
@@ -21,18 +23,18 @@ type (
 		// todo: 这个有待考虑，因为实际上一切 Agent 行为都会体现在 Prompt 上，且 Example 可以基于知识库生成，因此这一层或许未必需要
 		Functions []string `yaml:"functions,omitempty" json:"functions,omitempty"`
 
+		FunctionCtx  `yaml:"function_ctx,omitempty" json:"function_ctx,omitempty"`
 		FunctionMode `yaml:"function_mode,omitempty" json:"function_mode,omitempty"`
 	}
 )
 
 const (
-	FuncTellStart = `# 现在支持了以下 functions
+	FuncTellStart = `# 现在支持了以下 functions (example 中省略了 func_call:: 前缀)
 `
 	FuncTellTail = `
-当且仅当要使用 function 时，回复 func_call::name(params)，比如：
-func_call::search(\"用户的问题\") 
-注意:
-- 要调用函数时不要回复除调用函数以外的内容
+## Constrains - Functions
+- 当且仅当要使用 function 时，回复 func_call::name(params)
+- 要调用 function 时，你只说两句话，第一句是判断依据，第二句是就是 func_call::search(\"用户的问题\")  调用，然后就不任何内容
 - 如果不需要调用 function, 你的回复一定不要包含这种格式
 - 不允许输出空内容，不知道能做什么时说明即可
 `
@@ -43,6 +45,9 @@ func_call::search(\"用户的问题\")
 	FunctionModeSampleOnly FunctionMode = "sample"
 	// FunctionModeDump 复制模式, 将这个过程携带在返回中
 	FunctionModeDump FunctionMode = "dump"
+
+	FunctionCtxLocal FunctionCtx = "local"
+	FunctionCtxAll   FunctionCtx = "all"
 )
 
 // 获取函数信息
@@ -84,6 +89,13 @@ func (p *Prompt) BuildSystemMessage(ctx context.Context, tm *tool.Manager) *hist
 	if functionInfo != "" {
 		all += "\n\n" + functionInfo
 	}
+
+	if !strings.Contains(all, "# Initialization") {
+		all += `
+# Initialization
+	You must follow the Constrains. Then introduce yourself and introduce the Workflow.`
+	}
+
 	return &history.Message{
 		Role:    history.RoleSystem,
 		Content: all,

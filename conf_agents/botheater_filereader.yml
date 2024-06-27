@@ -18,4 +18,5 @@ prompt:
     ....
   functions:
     - local_file_reader
+  function_ctx: "local"
   function_mode: "sample"
