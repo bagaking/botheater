@@ -32,10 +32,15 @@ var NILCondition = &conditionNIL{}
 
 func MakeEdgeGroup(inputParamNames, outputParamNames []string) EdgeGroup {
 	return EdgeGroup{
-		ConditionTable:   make(ConditionTable),
-		TargetTable:      make(TargetTable),
+		ConditionTable: make(ConditionTable),
+		TargetTable:    make(TargetTable),
+
 		inputParamNames:  inputParamNames,
 		outputParamNames: inputParamNames,
+
+		nameMap:        make(map[Node]map[string]string),
+		conditionReady: make([]string, 0),
+		targetFinish:   make(map[string]int),
 	}
 }
 
@@ -56,12 +61,12 @@ func (e *EdgeGroup) TargetUnmetCount() int {
 func (e *EdgeGroup) In(ctx context.Context, upstream Node, paramOutName string, data any) (ready bool, err error) {
 	nodeTable, ok := e.nameMap[upstream]
 	if !ok {
-		return false, irr.Error("upstream %s are not found", upstream)
+		return false, irr.Error("upstream %s is not found", upstream)
 	}
 
 	paramName := ""
 	if paramName, ok = nodeTable[paramOutName]; !ok {
-		return false, irr.Error("upstream %s are not found", paramOutName)
+		return false, irr.Error("upstream %s is not found", paramOutName)
 	}
 
 	v, ok := e.ConditionTable[paramName]

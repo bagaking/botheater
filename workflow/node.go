@@ -7,29 +7,47 @@ import (
 )
 
 type (
-
-	// Node 是一个接口，表示工作流中的一个节点
+	// Node represents a node in the workflow. Each node can have upstream and downstream nodes,
+	// and can process input data and produce output data.
 	Node interface {
+		// Name returns the name of the node.
 		Name() string
 
+		// UpStream returns the condition table of the node, which contains the input parameters.
 		UpStream() ConditionTable
+
+		// DownStream returns the target table of the node, which contains the downstream nodes.
 		DownStream() TargetTable
 
+		// InsertUpstream inserts an upstream node with the given parameter names.
 		InsertUpstream(upstream Node, paramOutName string, paramInName string) error
+
+		// InsertDownstream inserts a downstream node with the given parameter name.
 		InsertDownstream(paramOutName string, downstreamNode Node) error
 
-		In(ctx context.Context, upstream Node, paramOutName string, data any) (ready bool, err error) // 所有的 input 收集到以后，进行 Execute
-		Out(ctx context.Context, paramName string, data any) (ready bool, err error)                  // 所有的 input 收集到以后，进行 Execute
+		// In processes the input data from the upstream node.
+		// 所有的 input 收集到以后，进行 Execute
+		In(ctx context.Context, upstream Node, paramOutName string, data any) (bool, error)
 
+		// Out processes the output data to the downstream nodes.
+		Out(ctx context.Context, paramName string, data any) (bool, error)
+
+		// IsSet checks if all upstream parameters are set.
 		IsSet() bool
+
+		// IsAllInputReady checks if all input parameters are ready.
 		IsAllInputReady() bool
+
+		// IsFinished checks if all downstream nodes have been triggered.
 		IsFinished() bool
 
-		Execute(ctx context.Context) (log string, err error)
+		// Execute executes the node's logic.
+		Execute(ctx context.Context) (string, error)
 	}
 
-	// SignalTarget 触发一次下游，finish 表示所有的下游都触发完成了
+	// SignalTarget 触发一次下游
 	SignalTarget func(ctx context.Context, paramName string, data any) (finish bool, err error)
+	// NodeExecutor the handler of executing a node.
 	NodeExecutor func(ctx context.Context, params ConditionTable, signal SignalTarget) (log string, err error)
 
 	WN struct {
@@ -52,46 +70,53 @@ func NewNode(name string, executor NodeExecutor, inputParamNames, outputParamNam
 	return w
 }
 
+// Connect connects two nodes by setting the downstream and upstream relationships.
 func Connect(from Node, outParamName string, to Node, inParamName string) error {
 	if err := from.InsertDownstream(outParamName, to); err != nil {
 		return err
 	}
-
 	if err := to.InsertUpstream(from, outParamName, inParamName); err != nil {
 		return err
 	}
-
 	return nil
 }
 
+// Name returns the name of the node.
 func (w *WN) Name() string {
 	return w.name
 }
 
+// UpStream returns the condition table of the node.
 func (w *WN) UpStream() ConditionTable {
 	return w.ConditionTable
 }
 
+// DownStream returns the target table of the node.
 func (w *WN) DownStream() TargetTable {
 	return w.TargetTable
 }
 
+// IsSet checks if all upstream parameters are set.
 func (w *WN) IsSet() bool {
 	return w.EdgeGroup.IsSet()
 }
 
+// IsAllInputReady checks if all input parameters are ready.
 func (w *WN) IsAllInputReady() bool {
 	return w.EdgeGroup.ConditionUnmetCount() == 0
 }
 
+// IsFinished checks if all downstream nodes have been triggered.
 func (w *WN) IsFinished() bool {
 	return w.EdgeGroup.TargetUnmetCount() == 0
 }
 
-func (w *WN) Out(ctx context.Context, paramOutName string, data any) (ready bool, err error) {
+// Out processes the output data to the downstream nodes.
+func (w *WN) Out(ctx context.Context, paramOutName string, data any) (bool, error) {
 	return w.EdgeGroup.TriggerAllDownstream(ctx, w, paramOutName, data)
 }
 
+// Execute executes the node's logic.
 func (w *WN) Execute(ctx context.Context) (string, error) {
 	// 合法性检查
 	if w.executor == nil {

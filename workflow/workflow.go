@@ -17,6 +17,8 @@ type (
 	}
 )
 
+// SetStartNode 设置工作流的起始节点
+// outputParams 表示起始节点的输出参数
 func (wf *Workflow) SetStartNode(outputParams []string) {
 	wf.StartNode = NewNode("__start", func(ctx context.Context, params ConditionTable, signal SignalTarget) (string, error) {
 		triggerFinished := false
@@ -40,7 +42,9 @@ func (wf *Workflow) SetStartNode(outputParams []string) {
 	}, nil, outputParams)
 }
 
-func (wf *Workflow) SetEndNode(inputParams []string, finish func(output any)) {
+// SetEndNode 设置工作流的结束节点
+// inputParams 表示结束节点的输入参数
+func (wf *Workflow) SetEndNode(inputParams []string) {
 	wf.EndNode = NewNode("__end", func(ctx context.Context, params ConditionTable, signal SignalTarget) (string, error) {
 		f, err := signal(ctx, "output", params)
 		if err != nil {
