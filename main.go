@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/bagaking/botheater/theater"
 
 	"github.com/sirupsen/logrus"
 
@@ -11,11 +12,6 @@ import (
 	"github.com/bagaking/botheater/tools"
 	"github.com/bagaking/botheater/utils"
 	"github.com/bagaking/goulp/wlog"
-)
-
-const (
-	MaxRound        = 100000
-	ContinueMessage = `如果达到目标了请回答 "任务完成"，并对整个聊天进行总结后，对用户的原始问题进行正式答复; 否则, 进一步分析接下来该做什么，并说明步骤`
 )
 
 var tm = tool.NewToolManager()
@@ -89,7 +85,7 @@ func main() {
 
 	// MultiAgentChat(ctx, h, "什么是vector_database", bots...)
 
-	MultiAgentChat(ctx, h, "找到现在这个本地仓库 util 里在带框架卡片具体实现原理和用法，然后参照任意 github 的 readme 格式，写一份 README.md 介绍功能的原理和具体用法", bots...)
+	theater.MultiAgentChat(ctx, h, "找到现在这个本地仓库 util 里在带框架卡片具体实现原理和用法，然后参照任意 github 的 readme 格式，写一份 README.md 介绍功能的原理和具体用法", bots...)
 	// MultiAgentChat(ctx, h, "找到现在这个本地仓库 util 里在把文字 format 成卡片格式的原理具体实现原理和用法，然后参照任意 github 的 readme 格式，写一份 README.md 介绍功能的原理和具体用法", bots...)
 	// MultiAgentChat(ctx, h, "现在这个本地仓库中的框架，能够确保 agent 很好的调用 functions，看看这是怎么做到的？这里的设计有什么独到之处？然后上网看看有没有类似的实现", bots...)
 	// MultiAgentChat(ctx, h, "找到现在这个本地仓库中 bot 的实现代码，然后对 bot 的实现思路进行总结", bots...)

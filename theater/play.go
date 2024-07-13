@@ -1,4 +1,4 @@
-package main
+package theater
 
 import (
 	"context"
@@ -12,6 +12,11 @@ import (
 
 	"github.com/bagaking/botheater/bot"
 	"github.com/bagaking/botheater/history"
+)
+
+const (
+	MaxRound        = 100000
+	ContinueMessage = `如果达到目标了请回答 "任务完成"，并对整个聊天进行总结后，对用户的原始问题进行正式答复; 否则, 进一步分析接下来该做什么，并说明步骤`
 )
 
 func MultiAgentChat(ctx context.Context, h *history.History, question string, bots ...*bot.Bot) {
