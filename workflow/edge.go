@@ -82,7 +82,6 @@ func (e *EdgeGroup) In(ctx context.Context, upstream Node, paramOutName string, 
 }
 
 func (e *EdgeGroup) TriggerAllDownstream(ctx context.Context, upstream Node, paramOutName string, data any) (finish bool, err error) {
-
 	// todo: 思考要不要检查 TargetTable, 这种情况意味着某个 out 的下游不存在，但这种情况感觉也是可以接受的
 	targets, ok := e.TargetTable[paramOutName]
 	if !ok {
@@ -120,15 +119,16 @@ func (e *EdgeGroup) InsertUpstream(upstream Node, paramOutName string, paramInNa
 	if e.inputParamNames != nil && !typer.SliceContains(e.inputParamNames, paramInName) {
 		return irr.Error("unsupported input param %s", paramInName)
 	}
+	if _, ok := e.ParamsTable[paramInName]; ok {
+		return irr.Error("param-input %s are already registered", paramInName)
+	}
+	e.ParamsTable[paramInName] = NILCondition
+
 	if _, ok := e.nameMap[upstream]; !ok {
 		e.nameMap[upstream] = make(map[string]string)
 	}
 	e.nameMap[upstream][paramOutName] = paramInName
 
-	if _, ok := e.ParamsTable[paramInName]; ok {
-		return irr.Error("input param %v are already config", ok)
-	}
-	e.ParamsTable[paramInName] = NILCondition
 	return nil
 }
 

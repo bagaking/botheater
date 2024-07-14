@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+
 	"github.com/bagaking/goulp/wlog"
 	"github.com/khicago/got/util/contraver"
 	"github.com/khicago/got/util/typer"
@@ -15,23 +16,28 @@ type (
 		StartNode Node
 		EndNode   Node
 		Output    ParamsTable
+
+		fakeN Node
 	}
 )
+
+var ErrWorkflowIsNotFinish = irr.Error("workflow is not finish")
 
 func (wf *Workflow) Finished() bool {
 	return wf.Output != nil
 }
 
 // SetStartNode 设置工作流的起始节点
-// outputParams 表示起始节点的输出参数
-func (wf *Workflow) SetStartNode(outputParams []string) {
+// 起始节点所有输入都被接受，只需要指定出参，outputParams 表示起始节点的出参
+func (wf *Workflow) SetStartNode(outputParams []string) error {
 	wf.StartNode = NewNode("__start", func(ctx context.Context, params ParamsTable, signal SignalTarget) (string, error) {
 		triggerFinished := false
 		for paramName := range params {
-			if _, ok := params[paramName]; !ok {
+			v, ok := params[paramName] // start 节点取出所有的输入值，并触发下游
+			if !ok {
 				return "", irr.Error("input param %s of start node is not set", paramName)
 			}
-			fin, err := signal(ctx, paramName, params)
+			fin, err := signal(ctx, paramName, v)
 			if err != nil {
 				return "", err
 			}
@@ -45,10 +51,21 @@ func (wf *Workflow) SetStartNode(outputParams []string) {
 		}
 		return "success", nil
 	}, nil, outputParams)
+
+	if wf.fakeN == nil {
+		wf.fakeN = NewNode("", nil, nil, nil)
+	}
+
+	for _, paramName := range outputParams { // 按照 initParams 定义参数
+		if err := wf.StartNode.InsertUpstream(wf.fakeN, paramName, paramName); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // SetEndNode 设置工作流的结束节点
-// inputParams 表示结束节点的输入参数
+// 终止节点所有的结果都会输出，因此只需要指定入参，inputParams 表示结束节点的入参
 func (wf *Workflow) SetEndNode(inputParams []string) {
 	wf.EndNode = NewNode("__end", func(ctx context.Context, params ParamsTable, signal SignalTarget) (string, error) {
 		if params == nil {
@@ -56,7 +73,10 @@ func (wf *Workflow) SetEndNode(inputParams []string) {
 		}
 		wlog.ByCtx(ctx).Infof("workflow %s enter end phase, out= %v", wf.Name, params)
 		// wf.Output 被设置时，整个 workflow 就结束了
-		wf.Output = params
+		wf.Output = ParamsTable{}
+		for _, key := range inputParams {
+			wf.Output[key] = params[key]
+		}
 
 		// todo：并没有下游，现在会检查 TargetTable。但可以考虑跳过执行的实现
 		//f, err := signal(ctx, "output", params)
@@ -71,25 +91,30 @@ func (wf *Workflow) SetEndNode(inputParams []string) {
 	}, inputParams, []string{"output"})
 }
 
+func (wf *Workflow) callStart(ctx context.Context, initParams ParamsTable) error {
+	wlog.ByCtx(ctx, "call_start").Infof("start with init params: %v", initParams)
+	for paramName := range initParams {
+		if _, err := wf.StartNode.In(ctx, wf.fakeN, paramName, initParams[paramName]); err != nil {
+			return irr.Wrap(err, "inject init param %s to start node failed", paramName)
+		}
+	}
+	return nil
+}
+
 // Execute 依次执行工作流中的所有节点
 func (wf *Workflow) Execute(ctx context.Context, initParams ParamsTable) (ParamsTable, error) {
 	logger := wlog.ByCtx(ctx, "WF.Execute").WithField("workflow", wf.Name)
+	if wf.Finished() {
+		return nil, irr.Error("cannot execute a finished workflow")
+	}
+
 	// todo: 遍历, 检查所有节点是否都已 Set, 检查是否无环，检查从 StartNode 可达全部节点，检查从全部节点可达 EndNode
+	// input 是注册制的，出现环时，由于整个还上所有的节点都至少有一个参数无法满足，因此导致 workflow is not finish 错误
+	// 如果允许任务会饿死
 
 	executionList := make([]Node, 0)
-
-	fakeNode := NewNode("", nil, nil, nil)
-
-	// 传入初始参数
-	for paramName := range initParams {
-		// 按照 initParams 定义参数
-		if err := wf.StartNode.InsertUpstream(fakeNode, paramName, paramName); err != nil {
-			return nil, irr.Wrap(err, "insert upstream nil to start node failed, when set param %s", paramName)
-		}
-		// 注入初始参数, 这里的 ready 可以忽略
-		if _, err := wf.StartNode.In(ctx, fakeNode, paramName, initParams[paramName]); err != nil {
-			return nil, irr.Wrap(err, "inject init param %s to start node failed", paramName)
-		}
+	if err := wf.callStart(ctx, initParams); err != nil {
+		return nil, irr.Wrap(err, "call start failed")
 	}
 	executionList = append(executionList, wf.StartNode)
 
@@ -126,7 +151,7 @@ func (wf *Workflow) Execute(ctx context.Context, initParams ParamsTable) (Params
 	// 说明执行列表为空了，结果还没有出来，这种情况是不可能的
 	if !wf.Finished() {
 		// 如果没有 Output，说明工作流没有结束, 但却没有可执行的节点了
-		return nil, irr.Error("workflow is not finish")
+		return nil, ErrWorkflowIsNotFinish
 	}
 	return wf.Output, nil
 }
