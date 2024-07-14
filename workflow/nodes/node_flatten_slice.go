@@ -2,7 +2,6 @@ package nodes
 
 import (
 	"context"
-
 	"github.com/bagaking/botheater/workflow"
 	"github.com/bagaking/goulp/wlog"
 	"github.com/khicago/got/util/typer"
@@ -12,8 +11,8 @@ import (
 type WFFlatten2DSlice struct{}
 
 const (
-	InNameMergeSlice  = "slices"
-	OutNameMergeSlice = "slice"
+	InNameFlattenSlice  = "slices"
+	OutNameFlattenSlice = "slice"
 )
 
 var _ workflow.NodeDef = &WFFlatten2DSlice{}
@@ -30,24 +29,18 @@ func (n *WFFlatten2DSlice) Execute(ctx context.Context, params workflow.ParamsTa
 		}
 	}()
 
-	slices, ok := params[InNameMergeSlice]
+	slices, ok := params[InNameFlattenSlice]
 	if !ok {
-		return "", irr.Error("input param %s is not set", InNameMergeSlice)
+		return "", irr.Error("input param %s is not set", InNameFlattenSlice)
 	}
 
 	if !typer.IsSlice(slices) {
-		return "", irr.Error("input param %s is not slice", InNameMergeSlice)
+		return "", irr.Error("input param %s is not slice", InNameFlattenSlice)
 	}
 
-	var sliceMerged any
-	if !typer.Is2DSlice(slices) {
-		sliceMerged = slices
-	} else if sliceMerged, err = typer.Flatten2DSlice(slices); err != nil {
-		return "", irr.Wrap(err, "merge slice failed")
-	}
-
-	wlog.ByCtx(ctx, "merge_slice").Infof("merge 2d slice result: %v", sliceMerged)
-	finished, err = signal(ctx, OutNameMergeSlice, sliceMerged)
+	sliceFlatten := typer.FlattenNestedSlices(slices, 2)
+	wlog.ByCtx(ctx, "merge_slice").Infof("merge 2d slice result,\n- form: %v - to: %v", len(slices.([]any)), len(sliceFlatten))
+	finished, err = signal(ctx, OutNameFlattenSlice, sliceFlatten)
 	return "success, slice merged", nil
 }
 
@@ -56,9 +49,9 @@ func (n *WFFlatten2DSlice) Name() string {
 }
 
 func (n *WFFlatten2DSlice) InNames() []string {
-	return []string{InNameMergeSlice}
+	return []string{InNameFlattenSlice}
 }
 
 func (n *WFFlatten2DSlice) OutNames() []string {
-	return []string{OutNameMergeSlice}
+	return []string{OutNameFlattenSlice}
 }
