@@ -9,6 +9,7 @@ import (
 type (
 	// Node represents a node in the workflow. Each node can have upstream and downstream nodes,
 	// and can process input data and produce output data.
+	// 除非自定义 Node，否则外界一般不用感知 Node 的具体行为，只需要实现 NodeDef 的接口 （或是使用 NewNode 的 raw 方法）即可
 	Node interface {
 		// Name returns the name of the node.
 		Name() string
@@ -58,28 +59,6 @@ type (
 )
 
 var _ Node = &WN{}
-
-// NewNode
-// inputParamNames 校验输入参数，如果设置，关联上游时不能指定超出该范围的参数名并且，且如果未关联所有上游时 IsSet 会返回 false
-func NewNode(name string, executor NodeExecutor, inputParamNames, outputParamNames []string) Node {
-	w := &WN{
-		name:      name,
-		executor:  executor,
-		EdgeGroup: MakeEdgeGroup(inputParamNames, outputParamNames),
-	}
-	return w
-}
-
-// Connect connects two nodes by setting the downstream and upstream relationships.
-func Connect(from Node, outParamName string, to Node, inParamName string) error {
-	if err := from.InsertDownstream(outParamName, to); err != nil {
-		return err
-	}
-	if err := to.InsertUpstream(from, outParamName, inParamName); err != nil {
-		return err
-	}
-	return nil
-}
 
 // Name returns the name of the node.
 func (nThis *WN) Name() string {

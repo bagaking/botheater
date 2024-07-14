@@ -19,7 +19,7 @@ var (
 
 // SplitOriginTextIntoChunks
 // in - input
-// out - output
+// out - chunks
 func SplitOriginTextIntoChunks(ctx context.Context, params workflow.ParamsTable, signal workflow.SignalTarget) (log string, err error) {
 	finished := false
 
