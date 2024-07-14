@@ -30,3 +30,5 @@ bundle/*.txt
 *.bundle.txt
 set_env.sh
 logs
+
+**/escape__*

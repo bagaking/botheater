@@ -2,12 +2,14 @@ package workflow
 
 import (
 	"context"
+	"sync"
 
 	"github.com/khicago/got/util/typer"
 	"github.com/khicago/irr"
 )
 
 type (
+	// todo: mutex
 	EdgeGroup struct {
 		ParamsTable
 		TargetTable
@@ -26,6 +28,8 @@ type (
 	conditionNIL struct{}
 	ParamsTable  map[string]any
 	TargetTable  map[string][]Node
+
+	mu *sync.RWMutex
 )
 
 var NILCondition = &conditionNIL{}

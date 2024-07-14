@@ -279,6 +279,14 @@ github.com/khicago/got v0.0.0-20240707162414-6d59752d650e h1:sbTQiBekvkes65kDRb+
 github.com/khicago/got v0.0.0-20240707162414-6d59752d650e/go.mod h1:23rzkvU/VYF9PPBT9hMXdz1FUlI7gAPsv3xG9krp2o0=
 github.com/khicago/got v0.0.0-20240714070426-e99daacd8fdc h1:z5xS/B4MOu3Mjujlo4EyEiAQpzDZRQx9O/4tz4CWJiE=
 github.com/khicago/got v0.0.0-20240714070426-e99daacd8fdc/go.mod h1:23rzkvU/VYF9PPBT9hMXdz1FUlI7gAPsv3xG9krp2o0=
+github.com/khicago/got v0.0.0-20240714153913-6c88bf71b920 h1:oOmiFrmmTe0vcnluGAImB0w+K2uGHq8T6TdN3tgPpmU=
+github.com/khicago/got v0.0.0-20240714153913-6c88bf71b920/go.mod h1:23rzkvU/VYF9PPBT9hMXdz1FUlI7gAPsv3xG9krp2o0=
+github.com/khicago/got v0.0.0-20240714164429-dbea5d5784ec h1:uK901nJwa5pwuA/Rz0/M8RhQTMz5QsFLdqM0qAOxma4=
+github.com/khicago/got v0.0.0-20240714164429-dbea5d5784ec/go.mod h1:23rzkvU/VYF9PPBT9hMXdz1FUlI7gAPsv3xG9krp2o0=
+github.com/khicago/got v0.0.0-20240714164533-269567fd5983 h1:FSF5CXuSFG7+9KGWMNjCG5fWawCkIlLAwnj6HUqUNfg=
+github.com/khicago/got v0.0.0-20240714164533-269567fd5983/go.mod h1:23rzkvU/VYF9PPBT9hMXdz1FUlI7gAPsv3xG9krp2o0=
+github.com/khicago/got v0.0.0-20240714164656-6e14c4a93941 h1:/BB2zXyD21XHPdfIfOHTnQvc59dY6A8JUnNaiaoNtg8=
+github.com/khicago/got v0.0.0-20240714164656-6e14c4a93941/go.mod h1:23rzkvU/VYF9PPBT9hMXdz1FUlI7gAPsv3xG9krp2o0=
 github.com/khicago/irr v0.0.0-20240309052027-df085c2216f6 h1:rtA26tT0ggG/veBxkhHwcqdUml5F/o8Cnc5Ov0FQLQ4=
 github.com/khicago/irr v0.0.0-20240309052027-df085c2216f6/go.mod h1:Xkg7IeaDuUdIGXfCYmJqMnxXznPAaRC50pGoyc4DcGQ=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
