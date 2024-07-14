@@ -23,6 +23,13 @@ type (
 
 var ErrWorkflowIsNotFinish = irr.Error("workflow is not finish")
 
+func New(name string) *Workflow {
+	return &Workflow{
+		Name:   name,
+		Output: nil,
+	}
+}
+
 func (wf *Workflow) Finished() bool {
 	return wf.Output != nil
 }

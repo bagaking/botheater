@@ -104,7 +104,7 @@ func TestWorkflow_Branching(t *testing.T) {
 	wf := &workflow.Workflow{Name: "BranchingWorkflow"}
 
 	// 定义起始节点和结束节点
-	wf.SetStartNode([]string{"startParam"})
+	_ = wf.SetStartNode([]string{"startParam"})
 	wf.SetEndNode([]string{"endParam"})
 
 	// 创建中间节点
