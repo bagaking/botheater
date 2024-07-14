@@ -2,8 +2,7 @@ package nodes
 
 import (
 	"context"
-
-	"github.com/khicago/got/util/contraver"
+	"sync"
 
 	"github.com/khicago/irr"
 
@@ -48,29 +47,64 @@ func (n *WFBotNode) Execute(ctx context.Context, params workflow.ParamsTable, si
 		return "", irr.Error("input param is empty")
 	}
 
-	answers := make([]any, 0, len(inputLst))
-	var execErr error
+	type task struct {
+		index int
+		input string
+	}
 
-	// 使用 TraverseAndWait 并发执行
-	contraver.TraverseAndWait(inputLst, func(input string) {
-		output, err := n.Bot.Question(ctx, history.NewHistory(), input)
-		if err != nil {
-			execErr = irr.Wrap(err, "bot question failed, input=%s", input)
-			return
-		}
-		var item any = output
-		if n.afterFunc != nil {
-			item, err = n.afterFunc(output)
+	tasks := make([]task, len(inputLst))
+	for i, input := range inputLst {
+		tasks[i] = task{index: i, input: input}
+	}
+
+	resultCh := make(chan struct {
+		index int
+		item  any
+		err   error
+	}, len(tasks))
+
+	var execErr error
+	var wg sync.WaitGroup
+	wg.Add(len(tasks))
+
+	for _, t := range tasks {
+		go func(t task) {
+			defer wg.Done()
+
+			output, err := n.Bot.Question(ctx, history.NewHistory(), t.input)
 			if err != nil {
-				execErr = irr.Wrap(err, "after func failed when handle str= %s", output)
+				execErr = irr.Wrap(err, "bot question failed, input=%s", t.input)
 				return
 			}
-		}
-		answers = append(answers, item)
-	}, contraver.WithConcurrency(5)) // 假设并发数为10，可以根据需要调整
+			var item any = output
+			if n.afterFunc != nil {
+				item, err = n.afterFunc(output)
+				if err != nil {
+					execErr = irr.Wrap(err, "after func failed when handle str= %s", output)
+					return
+				}
+			}
+			resultCh <- struct {
+				index int
+				item  any
+				err   error
+			}{index: t.index, item: item}
+		}(t)
+	}
+
+	wg.Wait()
+	close(resultCh)
 
 	if execErr != nil {
 		return "", execErr
+	}
+
+	answers := make([]any, len(tasks))
+	for result := range resultCh {
+		if result.err != nil {
+			return "", result.err
+		}
+		answers[result.index] = result.item
 	}
 
 	var output any = answers
