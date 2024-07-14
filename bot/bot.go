@@ -39,8 +39,9 @@ type (
 		UUID string `yaml:"uuid" json:"uuid"`
 		*Config
 
-		driver driver.Driver
-		tm     *tool.Manager
+		driver       driver.Driver
+		tm           *tool.Manager
+		argsReplacer map[string]any // 替换 prompt 中的占位符
 
 		// localHistory 用于跨任务记忆，目前没在用
 		// runtime 的解决，目前看临时 history 就够了
@@ -59,6 +60,12 @@ func New(conf Config, driver driver.Driver, tm *tool.Manager) *Bot {
 	return bot
 }
 
+// WithArgsReplacer 注入参数替换器，用于替换 prompt 中的占位符
+func (b *Bot) WithArgsReplacer(argsReplacer map[string]any) *Bot {
+	b.argsReplacer = argsReplacer
+	return b
+}
+
 func (b *Bot) Logger(ctx context.Context, funcName string) (*logrus.Entry, context.Context) {
 	ctx = utils.InjectAgentLogKey(ctx, b.PrefabName)
 	ctx = utils.InjectAgentID(ctx, b.UUID)
@@ -68,7 +75,9 @@ func (b *Bot) Logger(ctx context.Context, funcName string) (*logrus.Entry, conte
 
 func (b *Bot) MakeSystemMessage(ctx context.Context, appends ...string) *history.Message {
 	ctx = utils.InjectAgentLogKey(ctx, b.PrefabName)
-	msg := b.Prompt.BuildSystemMessage(ctx, b.tm).AppendContent(b.ActAsContext)
+	msg := b.Prompt.
+		BuildSystemMessage(ctx, b.tm, b.argsReplacer). // 注入 system prompt
+		AppendContent(b.ActAsContext)
 	for _, apd := range appends {
 		msg = msg.AppendContent(apd)
 	}
