@@ -1,6 +1,8 @@
 package utils
 
-import "context"
+import (
+	"context"
+)
 
 type CtxKey string
 
@@ -21,7 +23,11 @@ func InjectAgentID(ctx context.Context, id string) context.Context {
 
 // ExtractAgentLogKey 从 context 中获取 bot 的 prefabName
 func ExtractAgentLogKey(ctx context.Context) (string, bool) {
-	botID, ok := ctx.Value(CtxKeyAgentLog).(string)
+	if ctx == nil {
+		return "", false
+	}
+	x := ctx.Value(CtxKeyAgentLog)
+	botID, ok := x.(string)
 	return botID, ok
 }
 

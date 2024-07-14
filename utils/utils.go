@@ -75,3 +75,10 @@ func configureLogger(logger *logrus.Logger, outFile string) *logrus.Logger {
 	})
 	return logger
 }
+
+func CountTokens(text string) int {
+	// 这里可以引入第三方库或自定义函数来计算 token 数量
+	// 例如，使用 BPE 算法或其他分词算法
+	// todo: 这里为了简单起见，暂时使用字符数作为 token 数量
+	return len([]rune(text))
+}
