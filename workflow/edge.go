@@ -9,7 +9,7 @@ import (
 
 type (
 	EdgeGroup struct {
-		ConditionTable
+		ParamsTable
 		TargetTable
 
 		// assertion
@@ -23,20 +23,20 @@ type (
 		targetFinish   map[string]int
 	}
 
-	conditionNIL   struct{}
-	ConditionTable map[string]any
-	TargetTable    map[string][]Node
+	conditionNIL struct{}
+	ParamsTable  map[string]any
+	TargetTable  map[string][]Node
 )
 
 var NILCondition = &conditionNIL{}
 
 func MakeEdgeGroup(inputParamNames, outputParamNames []string) EdgeGroup {
 	return EdgeGroup{
-		ConditionTable: make(ConditionTable),
-		TargetTable:    make(TargetTable),
+		ParamsTable: make(ParamsTable),
+		TargetTable: make(TargetTable),
 
 		inputParamNames:  inputParamNames,
-		outputParamNames: inputParamNames,
+		outputParamNames: outputParamNames,
 
 		nameMap:        make(map[Node]map[string]string),
 		conditionReady: make([]string, 0),
@@ -45,7 +45,7 @@ func MakeEdgeGroup(inputParamNames, outputParamNames []string) EdgeGroup {
 }
 
 func (e *EdgeGroup) ConditionUnmetCount() int {
-	return len(e.ConditionTable) - len(e.conditionReady)
+	return len(e.ParamsTable) - len(e.conditionReady)
 }
 
 func (e *EdgeGroup) TargetUnmetCount() int {
@@ -61,7 +61,7 @@ func (e *EdgeGroup) TargetUnmetCount() int {
 func (e *EdgeGroup) In(ctx context.Context, upstream Node, paramOutName string, data any) (ready bool, err error) {
 	nodeTable, ok := e.nameMap[upstream]
 	if !ok {
-		return false, irr.Error("upstream %s is not found", upstream)
+		return false, irr.Error("upstream %s is not found in nameMap", upstream)
 	}
 
 	paramName := ""
@@ -69,19 +69,24 @@ func (e *EdgeGroup) In(ctx context.Context, upstream Node, paramOutName string, 
 		return false, irr.Error("upstream %s is not found", paramOutName)
 	}
 
-	v, ok := e.ConditionTable[paramName]
-	if ok {
-		return false, irr.Error("input param %s are already set (to %v)", ok, v)
+	v, ok := e.ParamsTable[paramName]
+	if !ok {
+		return false, irr.Error("input param %s are registered", paramName)
 	}
-	e.ConditionTable[paramName] = data
+	if v != NILCondition {
+		return false, irr.Error("input param %s are already set (to %v)", paramName, v)
+	}
+	e.ParamsTable[paramName] = data
 	e.conditionReady = append(e.conditionReady, paramName)
 	return e.ConditionUnmetCount() == 0, nil
 }
 
 func (e *EdgeGroup) TriggerAllDownstream(ctx context.Context, upstream Node, paramOutName string, data any) (finish bool, err error) {
+
+	// todo: 思考要不要检查 TargetTable, 这种情况意味着某个 out 的下游不存在，但这种情况感觉也是可以接受的
 	targets, ok := e.TargetTable[paramOutName]
 	if !ok {
-		return false, irr.Error("targets %s are not found", paramOutName)
+		return false, irr.Error("targets %s are not found, table= %v", paramOutName, e.TargetTable)
 	}
 	fCount := e.targetFinish[paramOutName]
 	if fCount > len(targets) {
@@ -105,14 +110,14 @@ func (e *EdgeGroup) IsSet() bool {
 	if e.inputParamNames == nil {
 		return true
 	}
-	return len(e.ConditionTable) == len(e.inputParamNames)
+	return len(e.ParamsTable) == len(e.inputParamNames)
 }
 
 func (e *EdgeGroup) InsertUpstream(upstream Node, paramOutName string, paramInName string) error {
 	if typer.IsNil(upstream) {
 		return irr.Error("cannot name nil upstream")
 	}
-	if e.inputParamNames != nil && typer.SliceContains(e.inputParamNames, paramInName) {
+	if e.inputParamNames != nil && !typer.SliceContains(e.inputParamNames, paramInName) {
 		return irr.Error("unsupported input param %s", paramInName)
 	}
 	if _, ok := e.nameMap[upstream]; !ok {
@@ -120,10 +125,10 @@ func (e *EdgeGroup) InsertUpstream(upstream Node, paramOutName string, paramInNa
 	}
 	e.nameMap[upstream][paramOutName] = paramInName
 
-	if _, ok := e.ConditionTable[paramInName]; ok {
-		return irr.Error("input param %s are already config", ok)
+	if _, ok := e.ParamsTable[paramInName]; ok {
+		return irr.Error("input param %v are already config", ok)
 	}
-	e.ConditionTable[paramInName] = NILCondition
+	e.ParamsTable[paramInName] = NILCondition
 	return nil
 }
 
@@ -132,7 +137,7 @@ func (e *EdgeGroup) InsertDownstream(paramOutName string, downstreamNode Node) e
 	if typer.IsNil(downstreamNode) {
 		return irr.Error("cannot insert nil downstream")
 	}
-	if e.outputParamNames != nil && typer.SliceContains(e.outputParamNames, paramOutName) {
+	if e.outputParamNames != nil && !typer.SliceContains(e.outputParamNames, paramOutName) {
 		return irr.Error("unsupported output param %s", paramOutName)
 	}
 	if lst, ok := e.TargetTable[paramOutName]; !ok {

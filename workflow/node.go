@@ -14,7 +14,7 @@ type (
 		Name() string
 
 		// UpStream returns the condition table of the node, which contains the input parameters.
-		UpStream() ConditionTable
+		UpStream() ParamsTable
 
 		// DownStream returns the target table of the node, which contains the downstream nodes.
 		DownStream() TargetTable
@@ -48,7 +48,7 @@ type (
 	// SignalTarget 触发一次下游
 	SignalTarget func(ctx context.Context, paramName string, data any) (finish bool, err error)
 	// NodeExecutor the handler of executing a node.
-	NodeExecutor func(ctx context.Context, params ConditionTable, signal SignalTarget) (log string, err error)
+	NodeExecutor func(ctx context.Context, params ParamsTable, signal SignalTarget) (log string, err error)
 
 	WN struct {
 		EdgeGroup
@@ -82,60 +82,65 @@ func Connect(from Node, outParamName string, to Node, inParamName string) error 
 }
 
 // Name returns the name of the node.
-func (w *WN) Name() string {
-	return w.name
+func (nThis *WN) Name() string {
+	return nThis.name
+}
+
+// String
+func (nThis *WN) String() string {
+	return nThis.name
 }
 
 // UpStream returns the condition table of the node.
-func (w *WN) UpStream() ConditionTable {
-	return w.ConditionTable
+func (nThis *WN) UpStream() ParamsTable {
+	return nThis.ParamsTable
 }
 
 // DownStream returns the target table of the node.
-func (w *WN) DownStream() TargetTable {
-	return w.TargetTable
+func (nThis *WN) DownStream() TargetTable {
+	return nThis.TargetTable
 }
 
 // IsSet checks if all upstream parameters are set.
-func (w *WN) IsSet() bool {
-	return w.EdgeGroup.IsSet()
+func (nThis *WN) IsSet() bool {
+	return nThis.EdgeGroup.IsSet()
 }
 
 // IsAllInputReady checks if all input parameters are ready.
-func (w *WN) IsAllInputReady() bool {
-	return w.EdgeGroup.ConditionUnmetCount() == 0
+func (nThis *WN) IsAllInputReady() bool {
+	return nThis.EdgeGroup.ConditionUnmetCount() == 0
 }
 
 // IsFinished checks if all downstream nodes have been triggered.
-func (w *WN) IsFinished() bool {
-	return w.EdgeGroup.TargetUnmetCount() == 0
+func (nThis *WN) IsFinished() bool {
+	return nThis.EdgeGroup.TargetUnmetCount() == 0
 }
 
 // Out processes the output data to the downstream nodes.
-func (w *WN) Out(ctx context.Context, paramOutName string, data any) (bool, error) {
-	return w.EdgeGroup.TriggerAllDownstream(ctx, w, paramOutName, data)
+func (nThis *WN) Out(ctx context.Context, paramOutName string, data any) (bool, error) {
+	return nThis.EdgeGroup.TriggerAllDownstream(ctx, nThis, paramOutName, data)
 }
 
 // Execute executes the node's logic.
-func (w *WN) Execute(ctx context.Context) (string, error) {
+func (nThis *WN) Execute(ctx context.Context) (string, error) {
 	// 合法性检查
-	if w.executor == nil {
-		return "", irr.Error("node %s has no executor")
+	if nThis.executor == nil {
+		return "", irr.Error("node %s has no executor", nThis.name)
 	}
-	if !w.IsSet() {
+	if !nThis.IsSet() {
 		return "", irr.Error("all upstream should be set")
 	}
 
 	// 所有的上游参数已经准备就绪
-	if !w.IsAllInputReady() {
-		return "", irr.Error("node %s is not ready", w.name)
+	if !nThis.IsAllInputReady() {
+		return "", irr.Error("node %s is not ready", nThis.name)
 	}
-	v, err := w.executor(ctx, w.UpStream(), w.Out)
+	v, err := nThis.executor(ctx, nThis.UpStream(), nThis.Out)
 	if err != nil {
-		return "", irr.Wrap(err, "node %s execute failed")
+		return "", irr.Wrap(err, "node %v execute failed", nThis.name)
 	}
-	if !w.IsFinished() {
-		return "", irr.Error("node %s internal error, not all target triggered", w.name)
+	if !nThis.IsFinished() {
+		return "", irr.Error("node %s internal error, not all target triggered", nThis.name)
 	}
 	return v, nil
 }

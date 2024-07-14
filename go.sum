@@ -275,6 +275,10 @@ github.com/julienschmidt/httprouter v1.3.0/go.mod h1:JR6WtHb+2LUe8TCKY3cZOxFyyO8
 github.com/jung-kurt/gofpdf v1.0.3-0.20190309125859-24315acbbda5/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
 github.com/khicago/got v0.0.0-20240520140129-635733602f45 h1:MKNrtYUU1Ble4+m0mLiia/Kp9I/O9LtSL0ryeSpcuFI=
 github.com/khicago/got v0.0.0-20240520140129-635733602f45/go.mod h1:23rzkvU/VYF9PPBT9hMXdz1FUlI7gAPsv3xG9krp2o0=
+github.com/khicago/got v0.0.0-20240707162414-6d59752d650e h1:sbTQiBekvkes65kDRb+K24KEhCR3HYTyNkCGGnhnUeA=
+github.com/khicago/got v0.0.0-20240707162414-6d59752d650e/go.mod h1:23rzkvU/VYF9PPBT9hMXdz1FUlI7gAPsv3xG9krp2o0=
+github.com/khicago/got v0.0.0-20240714070426-e99daacd8fdc h1:z5xS/B4MOu3Mjujlo4EyEiAQpzDZRQx9O/4tz4CWJiE=
+github.com/khicago/got v0.0.0-20240714070426-e99daacd8fdc/go.mod h1:23rzkvU/VYF9PPBT9hMXdz1FUlI7gAPsv3xG9krp2o0=
 github.com/khicago/irr v0.0.0-20240309052027-df085c2216f6 h1:rtA26tT0ggG/veBxkhHwcqdUml5F/o8Cnc5Ov0FQLQ4=
 github.com/khicago/irr v0.0.0-20240309052027-df085c2216f6/go.mod h1:Xkg7IeaDuUdIGXfCYmJqMnxXznPAaRC50pGoyc4DcGQ=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=

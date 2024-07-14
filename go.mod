@@ -6,7 +6,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/bagaking/goulp v0.0.0-20240621115658-1f21cb392e5d
 	github.com/google/uuid v1.6.0
-	github.com/khicago/got v0.0.0-20240520140129-635733602f45
+	github.com/khicago/got v0.0.0-20240714070426-e99daacd8fdc
 	github.com/khicago/irr v0.0.0-20240309052027-df085c2216f6
 	github.com/mattn/go-runewidth v0.0.15
 	github.com/sirupsen/logrus v1.9.3
