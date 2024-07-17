@@ -3,12 +3,13 @@ package utils
 import (
 	"context"
 	"fmt"
-	"github.com/bagaking/goulp/wlog"
-	"github.com/sirupsen/logrus"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/bagaking/goulp/wlog"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var LogDir = "./logs"
