@@ -67,6 +67,17 @@ func TestParseLine(t *testing.T) {
 			err: false,
 		},
 		{
+			line: "A -. p .-> B",
+			expected: &ASTNode{
+				StartNode: "A",
+				StartOut:  SingleNodeParamName,
+				EndIn:     SingleNodeParamName,
+				EndNode:   "B",
+				PrefabKey: "p",
+			},
+			err: false,
+		},
+		{
 			line: "A -->|:y| B",
 			expected: &ASTNode{
 				StartNode: "A",
