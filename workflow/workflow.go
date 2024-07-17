@@ -60,7 +60,7 @@ func (wf *Workflow) SetStartNode(outputParams []string) error {
 	}, nil, outputParams)
 
 	if wf.fakeN == nil {
-		wf.fakeN = NewNode("", nil, nil, nil)
+		wf.fakeN = NewNode("__fake_node", nil, nil, nil)
 	}
 
 	for _, paramName := range outputParams { // 按照 initParams 定义参数
@@ -99,7 +99,7 @@ func (wf *Workflow) SetEndNode(inputParams []string) {
 }
 
 func (wf *Workflow) callStart(ctx context.Context, initParams ParamsTable) error {
-	wlog.ByCtx(ctx, "call_start").Infof("start with init params: %v", initParams)
+	wlog.ByCtx(ctx, "call_start").Infof("start")
 	for paramName := range initParams {
 		if _, err := wf.StartNode.In(ctx, wf.fakeN, paramName, initParams[paramName]); err != nil {
 			return irr.Wrap(err, "inject init param %s to start node failed", paramName)
@@ -115,9 +115,12 @@ func (wf *Workflow) Execute(ctx context.Context, initParams ParamsTable) (Params
 		return nil, irr.Error("cannot execute a finished workflow")
 	}
 
-	// todo: 遍历, 检查所有节点是否都已 Set, 检查是否无环，检查从 StartNode 可达全部节点，检查从全部节点可达 EndNode
+	// 遍历, 检查所有节点是否都已 Set, 检查是否无环，检查从 StartNode 可达全部节点，检查从全部节点可达 EndNode
 	// input 是注册制的，出现环时，由于整个还上所有的节点都至少有一个参数无法满足，因此导致 workflow is not finish 错误
 	// 如果允许任务会饿死
+	if err := wf.Validate(); err != nil {
+		return nil, irr.Wrap(err, "workflow validate failed")
+	}
 
 	executionList := make([]Node, 0)
 	if err := wf.callStart(ctx, initParams); err != nil {
@@ -125,6 +128,7 @@ func (wf *Workflow) Execute(ctx context.Context, initParams ParamsTable) (Params
 	}
 	executionList = append(executionList, wf.StartNode)
 
+	allExecuted := make([]string, 0)
 	// 如果检查过了 EndNode 可达，正常执行的情况下一定会有 wf.Output
 	for !wf.Finished() {
 		// 并发执行所有已就绪的节点
@@ -133,6 +137,7 @@ func (wf *Workflow) Execute(ctx context.Context, initParams ParamsTable) (Params
 		if err != nil {
 			return nil, err
 		}
+		allExecuted = append(allExecuted, typer.SliceMap(executedNodes, func(n Node) string { return n.Name() })...)
 
 		// 执行过的节点必然完成，全部都可以踢掉
 		logger.Infof("remove executed nodes: %v", typer.SliceMap(executedNodes, func(n Node) string { return n.Name() }))
@@ -158,7 +163,7 @@ func (wf *Workflow) Execute(ctx context.Context, initParams ParamsTable) (Params
 	// 说明执行列表为空了，结果还没有出来，这种情况是不可能的
 	if !wf.Finished() {
 		// 如果没有 Output，说明工作流没有结束, 但却没有可执行的节点了
-		return nil, ErrWorkflowIsNotFinish
+		return nil, irr.Wrap(ErrWorkflowIsNotFinish, "executed= %v", allExecuted)
 	}
 	return wf.Output, nil
 }
@@ -167,7 +172,7 @@ func getAllDownstreamNodes(nodes []Node) []Node {
 	downstreamNodes := make([]Node, 0)
 	seenNodes := make(map[string]struct{})
 	for _, node := range nodes {
-		for _, downstream := range node.DownStream() {
+		for _, downstream := range node.Downstream() {
 			for _, n := range downstream {
 				if _, seen := seenNodes[n.Name()]; !seen {
 					downstreamNodes = append(downstreamNodes, n)

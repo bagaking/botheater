@@ -53,7 +53,10 @@ func TestWorkflow_SimpleChain(t *testing.T) {
 	wf := &workflow.Workflow{Name: "SimpleChainWorkflow"}
 
 	// 定义起始节点和结束节点
-	wf.SetStartNode([]string{"startParam"})
+	if err := wf.SetStartNode([]string{"startParam"}); err != nil {
+		t.Fatalf("设置起始节点失败: %v", err)
+	}
+
 	wf.SetEndNode([]string{"endParam"})
 
 	// 创建中间节点
@@ -104,7 +107,10 @@ func TestWorkflow_Branching(t *testing.T) {
 	wf := &workflow.Workflow{Name: "BranchingWorkflow"}
 
 	// 定义起始节点和结束节点
-	_ = wf.SetStartNode([]string{"startParam"})
+	if err := wf.SetStartNode([]string{"startParam"}); err != nil {
+		t.Fatalf("设置起始节点失败: %v", err)
+	}
+
 	wf.SetEndNode([]string{"endParam"})
 
 	// 创建中间节点
@@ -158,7 +164,10 @@ func TestWorkflow_Conditional(t *testing.T) {
 	wf := &workflow.Workflow{Name: "ConditionalWorkflow"}
 
 	// 定义起始节点和结束节点
-	wf.SetStartNode([]string{"startParam"})
+	if err := wf.SetStartNode([]string{"startParam"}); err != nil {
+		t.Fatalf("设置起始节点失败: %v", err)
+	}
+
 	wf.SetEndNode([]string{"endParam"})
 
 	// 创建中间节点
@@ -212,7 +221,10 @@ func TestWorkflow_Loop(t *testing.T) {
 	wf := &workflow.Workflow{Name: "LoopWorkflow"}
 
 	// 定义起始节点和结束节点
-	wf.SetStartNode([]string{"startParam"})
+	if err := wf.SetStartNode([]string{"startParam"}); err != nil {
+		t.Fatalf("设置起始节点失败: %v", err)
+	}
+
 	wf.SetEndNode([]string{"endParam"})
 
 	// 创建中间节点
@@ -239,8 +251,8 @@ func TestWorkflow_Loop(t *testing.T) {
 	if err == nil {
 		t.Fatalf("工作流应该执行失败")
 	}
-	if !errors.Is(err, workflow.ErrWorkflowIsNotFinish) {
-		t.Fatalf("工作流退出原因不符合预期，err= %v, expect= %v", err, workflow.ErrWorkflowIsNotFinish)
+	if !errors.Is(err, workflow.ErrCycleDetected) {
+		t.Fatalf("工作流退出原因不符合预期，err= %v, expect= %v", err, workflow.ErrCycleDetected)
 	}
 }
 
