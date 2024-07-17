@@ -11,17 +11,20 @@ import (
 )
 
 // ASTNode represents a node in the abstract syntax tree for the connector script.
+// Each ASTNode contains information about the start node, end node, parameters, and comments.
+// The Next field points to the next node in the chain if there are multiple connections in a single line.
 type ASTNode struct {
-	StartNode    string
-	StartOut     string
-	EndNode      string
-	EndIn        string
-	PrefabKey    string
-	StartComment string
-	EndComment   string
-	Next         *ASTNode
+	StartNode    string   // The name of the start node
+	StartOut     string   // The output parameter of the start node
+	EndNode      string   // The name of the end node
+	EndIn        string   // The input parameter of the end node
+	PrefabKey    string   // The key for prefab nodes
+	StartComment string   // The comment associated with the start node
+	EndComment   string   // The comment associated with the end node
+	Next         *ASTNode // The next node in the chain if there are multiple connections
 }
 
+// String returns a string representation of the ASTNode.
 func (ast *ASTNode) String() string {
 	cmStart := typer.IfThen(ast.StartComment == "", "", "["+ast.StartComment+"]")
 	cmEnd := typer.IfThen(ast.EndComment == "", "", "["+ast.EndComment+"]")
@@ -32,6 +35,7 @@ func (ast *ASTNode) String() string {
 }
 
 // ParseScript parses the connector script into an AST.
+// It processes each line of the script and constructs a linked list of ASTNodes.
 func ParseScript(ctx context.Context, script string) (*ASTNode, error) {
 	lines := strings.Split(script, "\n")
 	var root, current *ASTNode
@@ -42,7 +46,7 @@ func ParseScript(ctx context.Context, script string) (*ASTNode, error) {
 			continue
 		}
 
-		if strings.HasPrefix(line, "%%") { // todo
+		if strings.HasPrefix(line, "%%") { // Skip comment lines
 			continue
 		}
 
@@ -55,10 +59,16 @@ func ParseScript(ctx context.Context, script string) (*ASTNode, error) {
 
 		if root == nil {
 			root = node
-			current = node
-		} else {
+		}
+
+		if current != nil {
 			current.Next = node
-			current = node
+		}
+		current = node
+
+		// set current to the tail node
+		for current.Next != nil {
+			current = current.Next
 		}
 	}
 
@@ -66,6 +76,7 @@ func ParseScript(ctx context.Context, script string) (*ASTNode, error) {
 }
 
 // parseLine parses a single line of the script into an AST node.
+// It handles both standard and chained connection syntax.
 func parseLine(line string) (*ASTNode, error) {
 	// Adjusted regex to handle complex node names and comments
 	re := regexp.MustCompile(`(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?\s*--\s*(\w*)\|?([^:]*):?([^|]*)\|?\s*-->\s*(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?`)

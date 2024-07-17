@@ -20,11 +20,14 @@ func TakeSentences(lst []string, maxToken int) (paragraph []rune, left []string)
 	}
 	stash := lst[0]
 	for i := 1; i < lenSentence; i++ {
+		if len(lst[i]) == 0 {
+			continue
+		}
 		sentence := lst[i]
 		if CountTokens(stash)+CountTokens(sentence) > maxToken {
 			return []rune(stash), lst[i:]
 		}
-		stash += "\n" + lst[i]
+		stash += "\n" + sentence
 	}
 
 	return []rune(stash), nil
