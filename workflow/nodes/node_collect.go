@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bagaking/botheater/workflow"
 	"github.com/bagaking/goulp/jsonex"
 	"github.com/bagaking/goulp/wlog"
 	"github.com/khicago/got/util/typer"
 	"github.com/khicago/irr"
+
+	"github.com/bagaking/botheater/workflow"
 )
 
 // WFCollect 收集多个 input 到一个 collect 中

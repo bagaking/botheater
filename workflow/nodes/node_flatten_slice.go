@@ -3,10 +3,11 @@ package nodes
 import (
 	"context"
 
-	"github.com/bagaking/botheater/workflow"
 	"github.com/bagaking/goulp/wlog"
 	"github.com/khicago/got/util/typer"
 	"github.com/khicago/irr"
+
+	"github.com/bagaking/botheater/workflow"
 )
 
 type WFFlatten2DSlice struct{}
