@@ -129,6 +129,25 @@ func TestParseLine(t *testing.T) {
 			err: false,
 		},
 		{
+			line: "A --> B[x:x] --> C[t:t]",
+			expected: &ASTNode{
+				StartNode:  "A",
+				StartOut:   SingleNodeParamName,
+				EndIn:      SingleNodeParamName,
+				EndNode:    "B",
+				EndComment: "x:x",
+				Next: &ASTNode{
+					StartNode:    "B",
+					StartComment: "x:x",
+					StartOut:     SingleNodeParamName,
+					EndIn:        SingleNodeParamName,
+					EndNode:      "C",
+					EndComment:   "t:t",
+				},
+			},
+			err: false,
+		},
+		{
 			line: "A -->|x:y| B([x:xx]) --> C[ttt] -->|m:n| T",
 			expected: &ASTNode{
 				StartNode:  "A",

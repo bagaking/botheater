@@ -24,14 +24,24 @@ type ASTNode struct {
 	Next         *ASTNode // The next node in the chain if there are multiple connections
 }
 
+var (
+	// reStandard，用于匹配标准连接语法
+	reStandard = regexp.MustCompile(`(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?\s*--\s+(\w*)\|?([^:]*):?([^|]*)\|?\s*-->\s*(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?`)
+	// reChained，用于匹配简化和连写连接语法
+	reChained = regexp.MustCompile(`(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?\s*-->\s*(\|([^:]*):([^|]*)\|)?\s*(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?((\s*-->\s*(\|([^:]*):([^|]*)\|)?\s*(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?)*)`)
+	// 正则表达式，用于匹配连写连接语法中的每个连接部分
+	reChainPart = regexp.MustCompile(`\s*-->\s*(\|([^:]*):([^|]*)\|)?\s*(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?`)
+)
+
 // String returns a string representation of the ASTNode.
 func (ast *ASTNode) String() string {
-	cmStart := typer.IfThen(ast.StartComment == "", "", "["+ast.StartComment+"]")
-	cmEnd := typer.IfThen(ast.EndComment == "", "", "["+ast.EndComment+"]")
+	cmStart := typer.IfThen(ast.StartComment == "", "", "("+ast.StartComment+")")
+	cmEnd := typer.IfThen(ast.EndComment == "", "", "("+ast.EndComment+")")
 	outInTest := ast.StartOut + ast.EndIn
-	outIn := typer.IfThen(outInTest == "" || outInTest == SingleNodeParamName+SingleNodeParamName, "", "["+ast.StartOut+":"+ast.EndIn+"]")
+	outIn := typer.IfThen(outInTest == "" || outInTest == SingleNodeParamName+SingleNodeParamName, "", "|"+ast.StartOut+":"+ast.EndIn+"|")
+	prefabOutInt := typer.IfThen(ast.PrefabKey+outIn == "", "", "- "+ast.PrefabKey+outIn+" -")
 
-	return fmt.Sprintf("%s%s --%s%s--> %s[%s]", ast.StartNode, cmStart, ast.PrefabKey, outIn, ast.EndNode, cmEnd)
+	return fmt.Sprintf("%s%s -%s-> %s%s | %s", ast.StartNode, cmStart, prefabOutInt, ast.EndNode, cmEnd, ast.Next)
 }
 
 // ParseScript parses the connector script into an AST.
@@ -78,9 +88,7 @@ func ParseScript(ctx context.Context, script string) (*ASTNode, error) {
 // parseLine parses a single line of the script into an AST node.
 // It handles both standard and chained connection syntax.
 func parseLine(line string) (*ASTNode, error) {
-	// Adjusted regex to handle complex node names and comments
-	re := regexp.MustCompile(`(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?\s*--\s*(\w*)\|?([^:]*):?([^|]*)\|?\s*-->\s*(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?`)
-	matches := re.FindStringSubmatch(line)
+	matches := reStandard.FindStringSubmatch(line)
 	if len(matches) != 0 {
 		return &ASTNode{
 			StartNode:    strings.TrimSpace(matches[1]),
@@ -93,9 +101,7 @@ func parseLine(line string) (*ASTNode, error) {
 		}, nil
 	}
 
-	// Try simplified and chained connection syntax
-	re = regexp.MustCompile(`(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?\s*-->\s*(\|([^:]*):([^|]*)\|)?\s*(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?((\s*-->\s*(\|([^:]*):([^|]*)\|)?\s*(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?)*)`)
-	matches = re.FindStringSubmatch(line)
+	matches = reChained.FindStringSubmatch(line)
 	if len(matches) != 0 {
 		root := &ASTNode{
 			StartNode:    strings.TrimSpace(matches[1]),
@@ -107,8 +113,8 @@ func parseLine(line string) (*ASTNode, error) {
 		}
 		current := root
 		chain := matches[8]
-		reChain := regexp.MustCompile(`\s*-->\s*(\|([^:]*):([^|]*)\|)?\s*(\w+)(?:[\[\(\{]{1,2}([^()\[\]{}]+)[\]\)\}]{1,2})?`)
-		chainMatches := reChain.FindAllStringSubmatch(chain, -1)
+
+		chainMatches := reChainPart.FindAllStringSubmatch(chain, -1)
 		for _, cm := range chainMatches {
 			current.Next = &ASTNode{
 				StartNode:    current.EndNode,
