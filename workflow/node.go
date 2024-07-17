@@ -14,11 +14,15 @@ type (
 		// Name returns the name of the node.
 		Name() string
 
-		// UpStream returns the condition table of the node, which contains the input parameters.
-		UpStream() ParamsTable
+		// UniqID returns the uniq_id of the node.
+		UniqID() string
 
-		// DownStream returns the target table of the node, which contains the downstream nodes.
-		DownStream() TargetTable
+		// UpstreamInputs returns the condition table of the node, which contains the input parameters.
+		// !! 注意: UpstreamInputs 的 value 并不是上游 node，而是上游 node 执行完后传入的参数
+		UpstreamInputs() ParamsTable
+
+		// Downstream returns the target table of the node, which contains the downstream nodes.
+		Downstream() TargetTable
 
 		// InsertUpstream inserts an upstream node with the given parameter names.
 		InsertUpstream(upstream Node, paramOutName string, paramInName string) error
@@ -44,6 +48,15 @@ type (
 
 		// Execute executes the node's logic.
 		Execute(ctx context.Context) (string, error)
+
+		// Clone 克隆一个新的 Node
+		Clone() Node
+
+		// InNames 返回所有预设的输入的参数名
+		InNames() []string
+
+		// OutNames 返回所有预设的输出参数名
+		OutNames() []string
 	}
 
 	// SignalTarget 触发一次下游
@@ -54,6 +67,7 @@ type (
 	WN struct {
 		EdgeGroup
 		name     string
+		uniqueID string
 		executor NodeExecutor
 	}
 )
@@ -65,18 +79,22 @@ func (nThis *WN) Name() string {
 	return nThis.name
 }
 
+func (nThis *WN) UniqID() string {
+	return nThis.uniqueID
+}
+
 // String
 func (nThis *WN) String() string {
 	return nThis.name
 }
 
-// UpStream returns the condition table of the node.
-func (nThis *WN) UpStream() ParamsTable {
+// UpstreamInputs returns the condition table of the node.
+func (nThis *WN) UpstreamInputs() ParamsTable {
 	return nThis.ParamsTable
 }
 
-// DownStream returns the target table of the node.
-func (nThis *WN) DownStream() TargetTable {
+// Downstream returns the target table of the node.
+func (nThis *WN) Downstream() TargetTable {
 	return nThis.TargetTable
 }
 
@@ -107,14 +125,14 @@ func (nThis *WN) Execute(ctx context.Context) (string, error) {
 		return "", irr.Error("node %s has no executor", nThis.name)
 	}
 	if !nThis.IsSet() {
-		return "", irr.Error("all upstream should be set")
+		return "", irr.Error("all upstream should be set, upstream= %v, name_map= %v", nThis.UpstreamInputs(), nThis.nameMap)
 	}
 
 	// 所有的上游参数已经准备就绪
 	if !nThis.IsAllInputReady() {
 		return "", irr.Error("node %s is not ready", nThis.name)
 	}
-	v, err := nThis.executor(ctx, nThis.UpStream(), nThis.Out)
+	v, err := nThis.executor(ctx, nThis.UpstreamInputs(), nThis.Out)
 	if err != nil {
 		return "", irr.Wrap(err, "node %v execute failed", nThis.name)
 	}
@@ -122,4 +140,10 @@ func (nThis *WN) Execute(ctx context.Context) (string, error) {
 		return "", irr.Error("node %s internal error, not all target triggered", nThis.name)
 	}
 	return v, nil
+}
+
+// Clone 克隆一个新的 Node
+func (nThis *WN) Clone() Node {
+	// 要注意 executor 不能有副作用
+	return newWN(nThis.name, nThis.executor, nThis.inputParamNames, nThis.outputParamNames)
 }

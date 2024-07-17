@@ -48,6 +48,14 @@ func MakeEdgeGroup(inputParamNames, outputParamNames []string) EdgeGroup {
 	}
 }
 
+func (e *EdgeGroup) OutNames() []string {
+	return e.outputParamNames
+}
+
+func (e *EdgeGroup) InNames() []string {
+	return e.inputParamNames
+}
+
 func (e *EdgeGroup) ConditionUnmetCount() int {
 	return len(e.ParamsTable) - len(e.conditionReady)
 }
@@ -89,11 +97,11 @@ func (e *EdgeGroup) TriggerAllDownstream(ctx context.Context, upstream Node, par
 	// todo: 思考要不要检查 TargetTable, 这种情况意味着某个 out 的下游不存在，但这种情况感觉也是可以接受的
 	targets, ok := e.TargetTable[paramOutName]
 	if !ok {
-		return false, irr.Error("targets %s are not found, table= %v", paramOutName, e.TargetTable)
+		return false, irr.Error("targets `%s` are not found, table= %v", paramOutName, e.TargetTable)
 	}
 	fCount := e.targetFinish[paramOutName]
 	if fCount > len(targets) {
-		return false, irr.Error("targets %s are already finish", paramOutName)
+		return false, irr.Error("targets `%s` are already finish", paramOutName)
 	}
 
 	for i := fCount; i < len(targets); i++ {
@@ -142,7 +150,7 @@ func (e *EdgeGroup) InsertDownstream(paramOutName string, downstreamNode Node) e
 		return irr.Error("cannot insert nil downstream")
 	}
 	if e.outputParamNames != nil && !typer.SliceContains(e.outputParamNames, paramOutName) {
-		return irr.Error("unsupported output param %s", paramOutName)
+		return irr.Error("unsupported output param `%s`", paramOutName)
 	}
 	if lst, ok := e.TargetTable[paramOutName]; !ok {
 		e.TargetTable[paramOutName] = []Node{downstreamNode}
