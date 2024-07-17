@@ -32,10 +32,8 @@ func Msg2Str(ind int, msg *api.Message) string {
 
 	// return utils.SPrintWithMsgCard(fmt.Sprintf("--- %d. name[%s] (len:%d)---", ind, msg.Name, len(content)), content, 86)
 	return utils.SPrintWithFrameCard(
-		fmt.Sprintf(" %d. role[%s] name[%s] (len:%d)", ind, msg.Role, msg.Name, len(content)),
-		content,
-		utils.PrintWidthL2,
-		utils.StyMsgCard,
+		fmt.Sprintf(" %d. role[%s] name[%s] (len:%d) (token:%d)", ind, msg.Role, msg.Name, len(content), utils.CountTokens(content)),
+		content, utils.PrintWidthL2, utils.StyMsgCard,
 	)
 }
 
