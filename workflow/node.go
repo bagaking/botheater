@@ -2,7 +2,7 @@ package workflow
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/khicago/irr"
 )
 
@@ -57,6 +57,8 @@ type (
 
 		// OutNames 返回所有预设的输出参数名
 		OutNames() []string
+
+		fmt.Stringer
 	}
 
 	// SignalTarget 触发一次下游
@@ -72,6 +74,8 @@ type (
 	}
 )
 
+const ClonePrefix = "CLO_"
+
 var _ Node = &WN{}
 
 // Name returns the name of the node.
@@ -85,7 +89,7 @@ func (nThis *WN) UniqID() string {
 
 // String
 func (nThis *WN) String() string {
-	return nThis.name
+	return nThis.name + "-" + nThis.uniqueID
 }
 
 // UpstreamInputs returns the condition table of the node.
@@ -145,5 +149,10 @@ func (nThis *WN) Execute(ctx context.Context) (string, error) {
 // Clone 克隆一个新的 Node
 func (nThis *WN) Clone() Node {
 	// 要注意 executor 不能有副作用
-	return newWN(nThis.name, nThis.executor, nThis.inputParamNames, nThis.outputParamNames)
+	wn := newWN(nThis.name, nThis.executor, nThis.inputParamNames, nThis.outputParamNames)
+
+	wn.uniqueID = ClonePrefix + wn.uniqueID[len(ClonePrefix):]
+
+	wn.EdgeGroup.eventCallback = nThis.EdgeGroup.eventCallback
+	return wn
 }

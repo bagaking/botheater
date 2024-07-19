@@ -128,30 +128,30 @@ func (wf *Workflow) Execute(ctx context.Context, initParams ParamsTable) (Params
 	}
 	executionList = append(executionList, wf.StartNode)
 
-	allExecuted := make([]string, 0)
+	allExecuted := make([]Node, 0)
 	// 如果检查过了 EndNode 可达，正常执行的情况下一定会有 wf.Output
 	for !wf.Finished() {
 		// 并发执行所有已就绪的节点
-		logger.Infof("start exucte nodes: %v", typer.SliceMap(executionList, func(n Node) string { return n.Name() }))
+		logger.Infof("start execute nodes: %v", typer.SliceMap(executionList, func(n Node) string { return n.String() }))
 		executedNodes, err := executeNodesConcurrently(ctx, executionList)
 		if err != nil {
 			return nil, err
 		}
-		allExecuted = append(allExecuted, typer.SliceMap(executedNodes, func(n Node) string { return n.Name() })...)
+		allExecuted = append(allExecuted, executedNodes...)
 
 		// 执行过的节点必然完成，全部都可以踢掉
-		logger.Infof("remove executed nodes: %v", typer.SliceMap(executedNodes, func(n Node) string { return n.Name() }))
+		logger.Infof("remove executed nodes: %v", typer.SliceMap(executedNodes, func(n Node) string { return n.String() }))
 		executionList, _ = typer.SliceDiff(executedNodes, executionList)
 
 		// 查询所有执行节点的 downstream 中未就绪的节点，并加入执行列表 (注意，这里不再计算 n.IsSet)
 		// 这个筛选 IsAllInputReady 没有问题, 因为如果节点未就绪，那么它一定还有上游在 executionList 中
 		// 而 IsSet 应该在运行前检查，和每个 node 的 Execute 里检查，而不是在调度层
 		downstream := typer.SliceFilter(getAllDownstreamNodes(executedNodes), func(n Node) bool { return n.IsAllInputReady() })
-		logger.Infof("find input_ready downstreams: %v", typer.SliceMap(downstream, func(n Node) string { return n.Name() }))
+		logger.Infof("find input_ready downstreams: %v", typer.SliceMap(downstream, func(n Node) string { return n.String() }))
 
 		// 计算新增的节点
 		toAdd, _ := typer.SliceDiff(executionList, downstream)
-		logger.Infof("add input_ready downstreams: %v", typer.SliceMap(toAdd, func(n Node) string { return n.Name() }))
+		logger.Infof("add input_ready downstreams: %v", typer.SliceMap(toAdd, func(n Node) string { return n.String() }))
 		executionList = append(executionList, toAdd...)
 
 		// 如果执行列表为空，说明所有节点都执行完了
@@ -174,9 +174,9 @@ func getAllDownstreamNodes(nodes []Node) []Node {
 	for _, node := range nodes {
 		for _, downstream := range node.Downstream() {
 			for _, n := range downstream {
-				if _, seen := seenNodes[n.Name()]; !seen {
+				if _, seen := seenNodes[n.UniqID()]; !seen {
 					downstreamNodes = append(downstreamNodes, n)
-					seenNodes[n.Name()] = struct{}{}
+					seenNodes[n.UniqID()] = struct{}{}
 				}
 			}
 		}
@@ -189,14 +189,14 @@ func executeNodesConcurrently(ctx context.Context, nodes []Node) ([]Node, error)
 	var err error
 
 	contraver.TraverseAndWait(nodes, func(n Node) {
-		logger := wlog.ByCtx(ctx, n.Name())
+		logger := wlog.ByCtx(ctx, n.String())
 		log, execErr := n.Execute(ctx)
 		if execErr != nil {
-			logger.Errorf("node %s execute failed: %v", n.Name(), execErr)
+			logger.Errorf("node %s execute failed: %v", n, execErr)
 			err = execErr
 			return
 		}
-		logger.Infof("node %s execute success, log: %s", n.Name(), log)
+		logger.Infof("node %s execute success, log: %s", n, log)
 		executedNodes = append(executedNodes, n)
 	}, contraver.WithConcurrency(len(nodes)), contraver.WithWaitAtLeastDoneNum(len(nodes)))
 

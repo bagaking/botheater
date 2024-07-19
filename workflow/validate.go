@@ -57,7 +57,8 @@ func (wf *Workflow) GetAllNodes() []Node {
 func (wf *Workflow) checkAllNodesSet() error {
 	for _, node := range wf.GetAllNodes() {
 		if !node.IsSet() {
-			return irr.Wrap(ErrNodesNotFullySet, "node= %s (id=%s)", node.Name(), node.UniqID())
+			return irr.Wrap(ErrNodesNotFullySet, "node= %s, id= %s, in_names= %+v, in_params= %+v",
+				node.Name(), node.UniqID(), node.InNames(), node.UpstreamInputs())
 		}
 	}
 	return nil
