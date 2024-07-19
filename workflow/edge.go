@@ -113,8 +113,8 @@ func (e *EdgeGroup) TriggerAllDownstream(ctx context.Context, upstream Node, par
 		return false, irr.Error("targets `%s` are not found, table= %v", paramOutName, e.TargetTable)
 	}
 	fCount := e.targetFinish[paramOutName]
-	if fCount >= len(targets) {
-		return false, irr.Error("targets `%s` are already finish", paramOutName)
+	if fCount > len(targets) {
+		return false, irr.Error("targets `%s` are already finish, targetFinish= %+v", paramOutName, e.targetFinish)
 	}
 
 	for i := fCount; i < len(targets); i++ {

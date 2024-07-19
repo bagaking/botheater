@@ -92,12 +92,16 @@ func parseLine(line string) (*ASTNode, error) {
 		EndNode:      strings.TrimSpace(matches[9]),
 		EndComment:   strings.TrimSpace(matches[10]),
 	}
-	if strings.TrimSpace(matches[3]) != "" {
+	hasArrowParam := strings.TrimSpace(matches[3]) != ""
+	if hasArrowParam {
 		root.StartOut = strings.TrimSpace(matches[4])
 		root.EndIn = strings.TrimSpace(matches[5])
 	}
 
 	if root.PrefabKey = strings.TrimSpace(matches[6]); root.PrefabKey != "" {
+		if hasArrowParam {
+			return nil, fmt.Errorf("invalid syntax: %s", line)
+		}
 		root.StartOut = strings.TrimSpace(matches[7])
 		root.EndIn = strings.TrimSpace(matches[8])
 	}
@@ -117,12 +121,16 @@ func parseLine(line string) (*ASTNode, error) {
 			EndNode:      strings.TrimSpace(cm[7]),
 			EndComment:   strings.TrimSpace(cm[8]),
 		}
-		if strings.TrimSpace(cm[1]) != "" {
+		hasArrowParam := strings.TrimSpace(cm[1]) != ""
+		if hasArrowParam {
 			current.Next.StartOut = strings.TrimSpace(cm[2])
 			current.Next.EndIn = strings.TrimSpace(cm[3])
 		}
 
 		if current.Next.PrefabKey = strings.TrimSpace(cm[4]); current.Next.PrefabKey != "" {
+			if hasArrowParam {
+				return nil, fmt.Errorf("invalid syntax: %s", line)
+			}
 			current.Next.StartOut = strings.TrimSpace(cm[5])
 			current.Next.EndIn = strings.TrimSpace(cm[6])
 		}
