@@ -2,9 +2,8 @@ package nodes
 
 import (
 	"context"
+	"fmt"
 	"github.com/khicago/got/util/contraver"
-	"sync"
-
 	"github.com/khicago/irr"
 
 	"github.com/bagaking/botheater/bot"
@@ -12,27 +11,31 @@ import (
 	"github.com/bagaking/botheater/workflow"
 )
 
-type WFBotNode struct {
+type WFBotWithHistoryNode struct {
 	*bot.Bot
 	afterFunc func(answer string) (any, error)
 }
 
 const (
-	InNameBotQuestion  = "question"
-	OutNameBotQuestion = "answer"
+	InNameBotHistory = "history"
 )
 
-func NewBotWorkflowNode(botGist *bot.Bot, afterFunc func(answer string) (any, error)) *WFBotNode {
-	return &WFBotNode{
+func NewBotWithHistoryWorkflowNode(botGist *bot.Bot, afterFunc func(answer string) (any, error)) *WFBotWithHistoryNode {
+	return &WFBotWithHistoryNode{
 		Bot:       botGist,
 		afterFunc: afterFunc,
 	}
 }
 
-func (n *WFBotNode) Execute(ctx context.Context, params workflow.ParamsTable, signal workflow.SignalTarget) (log string, err error) {
+func (n *WFBotWithHistoryNode) Execute(ctx context.Context, params workflow.ParamsTable, signal workflow.SignalTarget) (log string, err error) {
 	_input, ok := params[InNameBotQuestion]
 	if !ok {
-		return "", irr.Error("input param is not set")
+		return "", irr.Error("input param %s is not set", InNameBotQuestion)
+	}
+
+	_history, ok := params[InNameBotHistory]
+	if !ok {
+		return "", irr.Error("input param %s is not set", InNameBotHistory)
 	}
 
 	inputLst := make([]string, 0)
@@ -65,13 +68,12 @@ func (n *WFBotNode) Execute(ctx context.Context, params workflow.ParamsTable, si
 	}, len(tasks))
 
 	var execErr error
-	var wg sync.WaitGroup
-	wg.Add(len(tasks))
 
 	contraver.TraverseAndWait(tasks, func(t task) {
-		defer wg.Done()
+		his := history.NewHistory()
+		his.EnqueueAssistantMsg(fmt.Sprintf("%v", _history), "workflow")
 
-		output, err := n.Bot.Question(ctx, history.NewHistory(), t.input)
+		output, err := n.Bot.Question(ctx, his, t.input)
 		if err != nil {
 			execErr = irr.Wrap(err, "bot question failed, input=%s", t.input)
 			return
@@ -90,8 +92,6 @@ func (n *WFBotNode) Execute(ctx context.Context, params workflow.ParamsTable, si
 			err   error
 		}{index: t.index, item: item}
 	}, contraver.WithConcurrency(2), contraver.WithWaitAtLeastDoneNum(len(tasks)))
-
-	wg.Wait()
 	close(resultCh)
 
 	if execErr != nil {
@@ -120,16 +120,16 @@ func (n *WFBotNode) Execute(ctx context.Context, params workflow.ParamsTable, si
 	return "success", nil
 }
 
-func (n *WFBotNode) Name() string {
+func (n *WFBotWithHistoryNode) Name() string {
 	return n.Bot.PrefabName
 }
 
-func (n *WFBotNode) InNames() []string {
-	return []string{InNameBotQuestion}
+func (n *WFBotWithHistoryNode) InNames() []string {
+	return []string{InNameBotQuestion, InNameBotHistory}
 }
 
-func (n *WFBotNode) OutNames() []string {
+func (n *WFBotWithHistoryNode) OutNames() []string {
 	return []string{OutNameBotQuestion}
 }
 
-var _ workflow.NodeDef = &WFBotNode{}
+var _ workflow.NodeDef = &WFBotWithHistoryNode{}

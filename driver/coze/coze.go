@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	"github.com/bagaking/botheater/utils"
 	"github.com/bagaking/goulp/wlog"
+	"github.com/khicago/got/util/proretry"
 	"github.com/khicago/got/util/typer"
 	"github.com/khicago/irr"
 	"github.com/volcengine/volc-sdk-golang/service/maas/models/api/v2"
 	client "github.com/volcengine/volc-sdk-golang/service/maas/v2"
+	"time"
 
 	"github.com/bagaking/botheater/driver"
 	"github.com/bagaking/botheater/history"
@@ -35,11 +36,22 @@ func (d *Driver) Chat(ctx context.Context, messages []*history.Message) (got str
 	req := d.buildRequest(messages)
 	d.debugStart(req, log, len(messages))
 
-	resp, status, err := d.maas.Chat(d.EndpointID, req)
+	var (
+		resp   *api.ChatResp
+		status int
+	)
+
+	err = proretry.Run(func() error {
+		resp, status, err = d.maas.Chat(d.EndpointID, req)
+		if err != nil {
+			return err
+		}
+		return nil
+	}, 2, proretry.FibonacciBackoff(time.Second*2), proretry.WithInitInterval(time.Second*2), proretry.WithRetryableErrs(&api.Error{}))
 	if err != nil {
 		errVal := &api.Error{}
 		if errors.As(err, &errVal) { // the returned error always type of *api.Error
-			log.WithError(errVal).Errorf("meet maas error, status= %d\n", status)
+			log.WithError(err).Errorf("meet maas error, status= %d\n", status)
 		}
 		return "", irr.Wrap(err, "chat failed")
 	}
