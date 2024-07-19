@@ -65,6 +65,9 @@ func TestParseLine(t *testing.T) {
 				PrefabKey: "p",
 			},
 			err: false,
+		}, {
+			line: "A -- p -->|:c| B",
+			err:  true,
 		},
 		{
 			line: "A -. p .-> B",
@@ -76,6 +79,42 @@ func TestParseLine(t *testing.T) {
 				PrefabKey: "p",
 			},
 			err: false,
+		},
+		{
+			line: "A --> B[x:x] -- C --> D",
+			expected: &ASTNode{
+				StartNode:  "A",
+				StartOut:   SingleNodeParamName,
+				EndIn:      SingleNodeParamName,
+				EndNode:    "B",
+				EndComment: "x:x",
+				Next: &ASTNode{
+					StartNode:    "B",
+					StartComment: "x:x",
+					StartOut:     SingleNodeParamName,
+					EndIn:        SingleNodeParamName,
+					EndNode:      "D",
+					PrefabKey:    "C",
+				},
+			},
+		},
+		{
+			line: "A -- B --> C[x:x] --> D",
+			expected: &ASTNode{
+				StartNode:  "A",
+				StartOut:   SingleNodeParamName,
+				EndIn:      SingleNodeParamName,
+				EndNode:    "C",
+				EndComment: "x:x",
+				PrefabKey:  "B",
+				Next: &ASTNode{
+					StartNode:    "C",
+					StartComment: "x:x",
+					StartOut:     SingleNodeParamName,
+					EndIn:        SingleNodeParamName,
+					EndNode:      "D",
+				},
+			},
 		},
 		{
 			line: "A -->|:y| B",
@@ -198,7 +237,7 @@ func TestParseLine(t *testing.T) {
 			continue
 		}
 		if !test.err && !compareASTNodes(result, test.expected) {
-			t.Errorf("parseLine(%q) = %+v, expected = %v", test.line, result, test.expected)
+			t.Errorf("parseLine(%q) not eq, result = %+v, expected = %v", test.line, result.PrintChain(), test.expected.PrintChain())
 		}
 	}
 }
