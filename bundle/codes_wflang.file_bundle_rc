@@ -1,0 +1,8 @@
+entry = [
+    "./workflow/wflang/*.go",
+]
+
+exclude = [
+    ".bundle.txt",
+    "./script"
+]

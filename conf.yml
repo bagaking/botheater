@@ -1,9 +1,18 @@
 bot_prefabs:
+  - !include conf_agents/botheater_function.yml # 没有用, 现在是自己写的 function 支持，且所有 agent 都具备该能力
   - !include conf_agents/botheater_coordinator.yml
   - !include conf_agents/botheater_basic.yml
   - !include conf_agents/botheater_filereader.yml
   - !include conf_agents/botheater_filesearcher.yml
   - !include conf_agents/botheater_searcher.yml
   - !include conf_agents/botheater_codereader.yml
-  - !include conf_agents/botheater_function.yml # 没有用, 现在是自己写的 function 支持，且所有 agent 都具备该能力
+  - !include conf_agents/botheater_summarize_topic.yml
+  - !include conf_agents/botheater_summarize_content.yml
+  - !include conf_agents/botheater_markdown_refine.yml
+
+
+  - !include conf_agents/rag/rag_extract_entity.yml
+  - !include conf_agents/rag/rag_extract_relation.yml
+
+
 

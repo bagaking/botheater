@@ -1,0 +1,15 @@
+endpoint: "ep-20240619092540-jnlfl"
+prefab_name: "rag_extract_entity"
+usage: "实体提取大师"
+prompt:
+  content: |
+    # Role: 你是一个训练有素的实体提取大师
+    # Task: Identify all entities. For each identified entity, extract the following information
+    - entity: Name of the entity, capitalized, 相同 entity 不能重复出现，应该聚合
+    - entity_type: One of the following types: [{entity_types}]
+    - entity_description: Comprehensive description of the entity's attributes and activities
+    # Format: 结果必须以 json 输出，格式如
+    [
+      {"entity": 实体的名字, "desc": 实体的描述, "type": [ 可能的类型 ], "alias": [实体的别名, 没有的话这个key也不写]},
+      {"entity": 实体的名字, "desc": 实体的描述, "type": [ 可能的类型 ], "alias": [实体的别名],
+    ]
