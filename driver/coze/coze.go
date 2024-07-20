@@ -47,11 +47,16 @@ func (d *Driver) Chat(ctx context.Context, messages []*history.Message) (got str
 			return err
 		}
 		return nil
-	}, 2, proretry.FibonacciBackoff(time.Second*2), proretry.WithInitInterval(time.Second*2), proretry.WithRetryableErrs(&api.Error{}))
+	}, 3,
+		proretry.WithInitInterval(time.Second*2),
+		proretry.WithBackoff(proretry.LinearBackoff(time.Second*2)),
+	)
 	if err != nil {
-		errVal := &api.Error{}
-		if errors.As(err, &errVal) { // the returned error always type of *api.Error
-			log.WithError(err).Errorf("meet maas error, status= %d\n", status)
+		if errors.Is(err, &proretry.RetryError{}) {
+			errVal := &api.Error{}
+			if errors.As(err, &errVal) { // the returned error always type of *api.Error
+				log.WithError(err).Errorf("meet maas error, status= %d\n", status)
+			}
 		}
 		return "", irr.Wrap(err, "chat failed")
 	}

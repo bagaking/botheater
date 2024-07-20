@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/khicago/got/util/contraver"
+	"github.com/khicago/got/util/proretry"
 	"github.com/khicago/irr"
+	"strings"
+	"time"
 
 	"github.com/bagaking/botheater/bot"
 	"github.com/bagaking/botheater/history"
@@ -70,22 +73,29 @@ func (n *WFBotWithHistoryNode) Execute(ctx context.Context, params workflow.Para
 	var execErr error
 
 	contraver.TraverseAndWait(tasks, func(t task) {
-		his := history.NewHistory()
-		his.EnqueueAssistantMsg(fmt.Sprintf("%v", _history), "workflow")
-
-		output, err := n.Bot.Question(ctx, his, t.input)
-		if err != nil {
+		var item any
+		if err = proretry.Run(func() error { // bot 请求错误，或者解析错误，都会进行重试
+			output := ""
+			his := history.NewHistory()
+			his.EnqueueAssistantMsg(fmt.Sprintf("%v", _history), "workflow")
+			if output, err = n.Bot.Question(ctx, his, t.input); err != nil {
+				return irr.Wrap(err, "bot question failed, input=%s", strings.Replace(t.input, "\n", "\\n", -1))
+			}
+			item = output
+			if n.afterFunc != nil {
+				if item, err = n.afterFunc(output); err != nil {
+					return irr.Wrap(err, "after func failed when handle str= `%s`", output)
+				}
+			}
+			return nil
+		}, 3,
+			proretry.WithInitInterval(time.Second*2),
+			proretry.WithBackoff(proretry.FibonacciBackoff(time.Second*2)),
+		); err != nil {
 			execErr = irr.Wrap(err, "bot question failed, input=%s", t.input)
 			return
 		}
-		var item any = output
-		if n.afterFunc != nil {
-			item, err = n.afterFunc(output)
-			if err != nil {
-				execErr = irr.Wrap(err, "after func failed when handle str= %s", output)
-				return
-			}
-		}
+
 		resultCh <- struct {
 			index int
 			item  any

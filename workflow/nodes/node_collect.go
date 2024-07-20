@@ -13,13 +13,14 @@ import (
 	"github.com/bagaking/botheater/workflow"
 )
 
-// WFCollect 收集多个 input 到一个 collect 中
-// collect 是一个 []any
-// 如果某个 input 是 []any，则会展开
-type WFCollect struct {
-	inNames []string
-	outMode any
-}
+type (
+	// WFCollect 收集多个 input 到一个 collect 中
+	// collect 默认是一个 []any，当某个 input 也是 []any 时，则会默认展开
+	WFCollect struct {
+		inNames []string
+		outMode any
+	}
+)
 
 const (
 	OutCollect = "collect"

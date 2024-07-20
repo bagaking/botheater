@@ -3,7 +3,10 @@ package nodes
 import (
 	"context"
 	"github.com/khicago/got/util/contraver"
+	"github.com/khicago/got/util/proretry"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/khicago/irr"
 
@@ -71,19 +74,30 @@ func (n *WFBotNode) Execute(ctx context.Context, params workflow.ParamsTable, si
 	contraver.TraverseAndWait(tasks, func(t task) {
 		defer wg.Done()
 
-		output, err := n.Bot.Question(ctx, history.NewHistory(), t.input)
-		if err != nil {
-			execErr = irr.Wrap(err, "bot question failed, input=%s", t.input)
+		var item any
+
+		if err = proretry.Run(func() error { // bot 请求错误，或者解析错误，都会进行重试
+			output := ""
+			if output, err = n.Bot.Question(ctx, history.NewHistory(), t.input); err != nil {
+				return irr.Wrap(err, "bot question failed, input=%s", strings.Replace(t.input, "\n", "\\n", -1))
+			} else {
+				item = output
+			}
+
+			if n.afterFunc != nil {
+				if item, err = n.afterFunc(output); err != nil {
+					return irr.Wrap(err, "after func failed when handle str= `%s`", output)
+				}
+			}
+			return nil
+		}, 3,
+			proretry.WithInitInterval(time.Second*2),
+			proretry.WithBackoff(proretry.FibonacciBackoff(time.Second*2)),
+		); err != nil {
+			execErr = irr.Wrap(err, "bot question failed, input= %s", strings.Replace(t.input, "\n", "\\n", -1))
 			return
 		}
-		var item any = output
-		if n.afterFunc != nil {
-			item, err = n.afterFunc(output)
-			if err != nil {
-				execErr = irr.Wrap(err, "after func failed when handle str= %s", output)
-				return
-			}
-		}
+
 		resultCh <- struct {
 			index int
 			item  any
