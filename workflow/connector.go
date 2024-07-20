@@ -47,7 +47,7 @@ func Connect(from Node, outParamName string, to Node, inParamName string) error 
 		return irr.Wrap(err, "connect %s -->|%s:%s| %s", from.String(), outParamName, inParamName, to.String())
 	}
 
-	//wlog.Common("connector.connect").Infof("connect %s -->|%s:%s| %s", from.Name(), outParamName, inParamName, to.Name())
+	// wlog.Common("connector.connect").Infof("connect %s -->|%s:%s| %s", from.Name(), outParamName, inParamName, to.Name())
 	if err := to.InsertUpstream(from, outParamName, inParamName); err != nil {
 		return irr.Wrap(err, "connect %s -->|%s:%s| %s", from.String(), outParamName, inParamName, to.String())
 	}
@@ -112,9 +112,9 @@ func (c *Connector) connectByAST(ctx context.Context, nodeMap map[string]Node, a
 			logger.Debugf("connect normal node [out] %s -->|%s:%s| %s", startNode, ast.StartOut, ast.EndIn, endNode)
 		} else {
 			if err := c.connectAstPrefab(ctx, ast.PrefabKey, nodeMap, startNode, endNode, ast.StartOut, ast.EndIn); err != nil {
-				return irr.Wrap(err, "connect prefab node [in] %s", ast)
+				return irr.Wrap(err, "connect as prefab node failed, ast_node= %s", ast)
 			}
-			logger.Debugf("connect prefab node [in] %s -->|%s:%s| %s", startNode, ast.StartOut, ast.EndIn, endNode)
+			logger.Debugf("connect prefab between %s -->|%s:%s| %s failed，prefabKey= %s", startNode, ast.StartOut, ast.EndIn, endNode, ast.PrefabKey)
 		}
 
 		ast = ast.Next

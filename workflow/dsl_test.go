@@ -65,7 +65,8 @@ func TestParseLine(t *testing.T) {
 				PrefabKey: "p",
 			},
 			err: false,
-		}, {
+		},
+		{
 			line: "A -- p -->|:c| B",
 			err:  true,
 		},

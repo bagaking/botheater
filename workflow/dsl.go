@@ -53,9 +53,8 @@ func compile(str string) *regexp.Regexp {
 	str = strings.Replace(str, "_OpenBrackets_", _OpenBrackets_, -1)
 	str = strings.Replace(str, "_CloseBrackets_", _CloseBrackets_, -1)
 
-	//wlog.Common().Infof("compile =%v", str)
+	// wlog.Common().Infof("compile =%v", str)
 	re, err := regexp.Compile(str)
-
 	if err != nil {
 		panic(err)
 	}
@@ -75,7 +74,7 @@ var (
 // It handles both standard and chained connection syntax.
 func parseLine(line string) (*ASTNode, error) {
 	matches := reChained.FindStringSubmatch(line)
-	//wlog.Common().Infof("parse line %s ;\nmatches =%v", line, jsonex.MustMarshalToString(matches))
+	// wlog.Common().Infof("parse line %s ;\nmatches =%v", line, jsonex.MustMarshalToString(matches))
 	if len(matches) == 0 {
 		return nil, fmt.Errorf("invalid syntax: %s", line)
 	}
@@ -114,7 +113,7 @@ func parseLine(line string) (*ASTNode, error) {
 
 	chainMatches := reChainPart.FindAllStringSubmatch(chain, -1)
 	for _, cm := range chainMatches {
-		//wlog.Common().Infof("chainIn %s ;;; matches =%v", line, jsonex.MustMarshalToString(cm))
+		// wlog.Common().Infof("chainIn %s ;;; matches =%v", line, jsonex.MustMarshalToString(cm))
 		current.Next = &ASTNode{
 			StartNode:    current.EndNode,
 			StartComment: current.EndComment,
@@ -223,7 +222,7 @@ func ParseScript(ctx context.Context, script string) (*ASTNode, error) {
 func (ast *ASTNode) String() string {
 	cmStart := typer.IfThen(ast.StartComment == "", "", "("+ast.StartComment+")")
 	cmEnd := typer.IfThen(ast.EndComment == "", "", "("+ast.EndComment+")")
-	//outInTest := ast.StartOut + ast.EndIn
+	// outInTest := ast.StartOut + ast.EndIn
 	outIn := "|" + ast.StartOut + ":" + ast.EndIn + "|" // always show; typer.IfThen(outInTest == "" || outInTest == SingleNodeParamName+SingleNodeParamName, "", )
 	prefabOutInt := typer.IfThen(ast.PrefabKey+outIn == "", "", "- "+ast.PrefabKey+outIn+" -")
 

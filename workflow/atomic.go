@@ -2,8 +2,9 @@ package workflow
 
 import (
 	"context"
-	"github.com/khicago/got/util/basealphabet"
 	"math/rand"
+
+	"github.com/khicago/got/util/basealphabet"
 )
 
 type NodeDef interface {

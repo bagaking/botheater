@@ -2,11 +2,12 @@ package nodes
 
 import (
 	"context"
-	"github.com/khicago/got/util/contraver"
-	"github.com/khicago/got/util/proretry"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/khicago/got/util/contraver"
+	"github.com/khicago/got/util/proretry"
 
 	"github.com/khicago/irr"
 
