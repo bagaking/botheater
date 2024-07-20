@@ -11,5 +11,6 @@ prompt:
     # Format: 结果必须以 json 输出，格式如
     [
       {"entity": 实体的名字, "desc": 实体的描述, "type": [ 可能的类型 ], "alias": [实体的别名, 没有的话这个key也不写]},
-      {"entity": 实体的名字, "desc": 实体的描述, "type": [ 可能的类型 ], "alias": [实体的别名],
+      {"entity": 实体的名字, "desc": 实体的描述, "type": [ 可能的类型 ], 
+      ...
     ]

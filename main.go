@@ -64,6 +64,11 @@ func main() {
 		log.WithError(err).Fatalf("create rag_extract_entity failed")
 	}
 
+	botRagMergeEntity, err := conf.NewBot(ctx, "rag_merge_entity", tm)
+	if err != nil {
+		log.WithError(err).Fatalf("create rag_merge_entity failed")
+	}
+
 	botRagExtractRelation, err := conf.NewBot(ctx, "rag_extract_relation", tm)
 	if err != nil {
 		log.WithError(err).Fatalf("create rag_extract_relation failed")
@@ -80,6 +85,6 @@ func main() {
 	wf_rag.TryWorkflow(ctx, wf_rag.UsingBots{
 		ExtractEntity:   botRagExtractEntity,
 		ExtractRelation: botRagExtractRelation,
+		MergeEntity:     botRagMergeEntity,
 	})
-
 }

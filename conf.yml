@@ -13,6 +13,4 @@ bot_prefabs:
 
   - !include conf_agents/rag/rag_extract_entity.yml
   - !include conf_agents/rag/rag_extract_relation.yml
-
-
-
+  - !include conf_agents/rag/rag_merge_entity.yml

@@ -24,11 +24,12 @@ func (w workflowCtx) GetChunkSize() int {
 type UsingBots struct {
 	ExtractEntity   *bot.Bot
 	ExtractRelation *bot.Bot
+	MergeEntity     *bot.Bot
 }
 
 func TryWorkflow(ctx context.Context, bots UsingBots) {
 	wfCtx := workflowCtx{
-		ChunkSize: 2 * 1024,
+		ChunkSize: 3 * 1024,
 	}
 	ctx = workflow.WithCtx(ctx, wfCtx)
 
@@ -46,6 +47,9 @@ func TryWorkflow(ctx context.Context, bots UsingBots) {
 	nodeChunk := workflow.NewNode("SplitOriginTextIntoChunks", nodes.SplitOriginTextIntoChunks[workflowCtx], []string{"input"}, []string{"chunks"})
 
 	unmarshal2StrLst := func(answer string) (any, error) {
+		if answer == "" {
+			return nil, irr.Error("answer is empty")
+		}
 		lst := make([]any, 0)
 		if err := jsonex.Unmarshal([]byte(answer), &lst); err != nil {
 			return nil, irr.Wrap(err, "unmarshal tidy answer to list failed")
@@ -55,6 +59,7 @@ func TryWorkflow(ctx context.Context, bots UsingBots) {
 
 	nodeBotExtractEntity := workflow.NewNodeByDef(nodes.NewBotWorkflowNode(bots.ExtractEntity, unmarshal2StrLst))
 	nodeBotExtractRelation := workflow.NewNodeByDef(nodes.NewBotWithHistoryWorkflowNode(bots.ExtractRelation, unmarshal2StrLst))
+	nodeBotMergeEntity := workflow.NewNodeByDef(nodes.NewBotReduceWorkflowNode(bots.MergeEntity, unmarshal2StrLst))
 
 	conn := &workflow.Connector{}
 	{
@@ -62,9 +67,11 @@ func TryWorkflow(ctx context.Context, bots UsingBots) {
 			"n_start": wf.StartNode,
 			"n_end":   wf.EndNode,
 
-			"collect_1": workflow.NewNodeByDef(nodes.NewCollectWorkflowNode([]string{"in1"}, "")),
-			"collect_2": workflow.NewNodeByDef(nodes.NewCollectWorkflowNode([]string{"in1", "in2"}, "")),
-			"n_print":   workflow.NewNodeByDef(nodes.NewPrinterWorkflowNode("text")),
+			"_serializer_lst": workflow.NewNodeByDef(nodes.NewSerializerNode(nodes.SerializeModeJsonStrLst)),
+			"_serializer_str": workflow.NewNodeByDef(nodes.NewSerializerNode(nodes.SerializeModeYamlStr)),
+			"collect_1":       workflow.NewNodeByDef(nodes.NewCollectWorkflowNode([]string{"in1"}, "")),
+			"collect_2":       workflow.NewNodeByDef(nodes.NewCollectWorkflowNode([]string{"in1", "in2"}, "")),
+			"n_print":         workflow.NewNodeByDef(nodes.NewPrinterWorkflowNode("text")),
 			"n_flatten": workflow.NewNodeByDef(nodes.NewMergeSliceWorkflowNode(), workflow.WithEventCallback(func(event, log string) {
 				wlog.Common("Flatten").Infof("%s : %s", event, log)
 			})),
@@ -72,6 +79,7 @@ func TryWorkflow(ctx context.Context, bots UsingBots) {
 			"n_chunks":             nodeChunk,
 			"bot_extract_entity":   nodeBotExtractEntity,
 			"bot_extract_relation": nodeBotExtractRelation,
+			"bot_merge_entity":     nodeBotMergeEntity,
 		}
 
 		conn.Use(ctx, nodeMap, Script1)
@@ -89,44 +97,31 @@ func TryWorkflow(ctx context.Context, bots UsingBots) {
 		log.Fatalf("工作流执行异常")
 	}
 
-	entities, ok := outTable["entities"].([]any)
+	entities, ok := outTable["entities"].(string)
 	if !ok {
 		log.Fatalf("工作流执行结果 entities 类型错误")
 	}
 
-	e, err := jsonex.MarshalIndent(entities, "", "  ")
-	if err != nil {
-		log.Fatalf("工作流执行结果 entities 解析错误")
-	}
-	eStr := string(e)
-
-	relations, ok := outTable["relations"].([]any)
+	relations, ok := outTable["relations"].(string)
 	if !ok {
 		log.Fatalf("工作流执行结果 relations 类型错误")
 	}
-	r, err := jsonex.MarshalIndent(relations, "", "  ")
-	if err != nil {
-		log.Fatalf("工作流执行结果 relations 解析错误")
-	}
-	rStr := string(r)
 
-	log.Infof("entities len= %d, token= %d", len(entities), utils.CountTokens(eStr))
-	log.Infof("relations len= %d, token= %d", len(relations), utils.CountTokens(rStr))
+	log.Infof("entities len= %d, token= %d", len(entities), utils.CountTokens(entities))
+	log.Infof("relations len= %d, token= %d", len(relations), utils.CountTokens(relations))
 
-	log.Infof("\n\n%s", utils.SPrintWithFrameCard("抽取的实体", eStr, 168, utils.StyConclusion))
-	log.Infof("\n\n%s", utils.SPrintWithFrameCard("这些实体的关系", rStr, 168, utils.StyConclusion))
+	log.Infof("\n\n%s", utils.SPrintWithFrameCard("抽取的实体", entities, 168, utils.StyConclusion))
+	log.Infof("\n\n%s", utils.SPrintWithFrameCard("这些实体的关系", relations, 168, utils.StyConclusion))
 }
 
 const Script1 = `%%{init: {'theme':'base',"fontFamily": "monospace", "sequence": { "wrap": true }, "flowchart": { "curve": "linear" } }}%%
 flowchart TD
 
-n_start --> n_chunks[n_chunks:将结果先分段] --> bot_extract_entity([bot_extract_entity\n逐个chunk抽取实体]) 
+n_start --> n_chunks[n_chunks:将结果先分段] --> bot_extract_entity([bot_extract_entity\n逐个chunk抽取实体]) -- _serializer_lst --> bot_merge_entity([bot_merge_entity\n合并相同实体]) 
 
-bot_extract_entity -- n_flatten|:entities| --> n_end((结束))
+bot_merge_entity -- _serializer_str |:history| --> bot_extract_relation([bot_extract_relation\n逐个chunk抽取实体关系内容])
+n_chunks -->|:question| bot_extract_relation
 
-bot_extract_entity -- n_flatten|:history| --> bot_extract_relation([bot_extract_relation\n逐个chunk抽取实体关系内容])
-
-n_chunks -->|chunks:question| bot_extract_relation -- n_flatten|:relations| --> n_end((结束)) 
-
-%% bot_extract_entity -- n_print --> __0
+bot_merge_entity -- n_flatten, _serializer_str |:entities| --> n_end((结束))
+bot_extract_relation -- n_flatten, _serializer_str |:relations| --> n_end
 `
