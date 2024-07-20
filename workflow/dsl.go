@@ -30,8 +30,8 @@ const (
 	_Comment_       = `(?:_OpenBrackets_([^()\[\]{}]+)_CloseBrackets_)` // 注释, matches 1: comment
 	_Node_          = `(\w+)_Comment_?`                                 // 节点名, matches 2: node name, comment
 
-	_ParamLink_  = `(?:(?:-[.-]*-)|(?:={2,}))[>ox](\|([^:]*):([^|]*)\|)?` // matches 3 : param all, param in, param out
-	_PrefabLink_ = `-[-.]\s+(\w*)(?:\|?([^|:]*):?([^|]*)\|?)\s*[-.]->`    // matches 3 : prefab key, prefab in, prefab out
+	_ParamLink_  = `(?:(?:-[.-]*-)|(?:={2,}))[>ox](\|([^:]*):([^|]*)\|)?`       // matches 3 : param all, param in, param out
+	_PrefabLink_ = `-[-.]\s+(\w[\w,\s>]*)?(?:\|?([^|:]*):?([^|]*)\|?)\s*[-.]->` // matches 3 : prefab key, prefab in, prefab out
 
 	_ReChained_   = `_Node__ReChainPart_((_ReChainPart_)*)` // matches 11+ = 2 + 8 + 1 + n:
 	_ReChainPart_ = `\s*_Link_\s*_Node_`                    // matches 8 = 3 + 3 + 2: link -(1 param, 2 in, 3 out), (4 prefab, 5 in, 6 out), 7 node name, 8 comment

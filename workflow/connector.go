@@ -3,8 +3,10 @@ package workflow
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/bagaking/goulp/wlog"
+	"github.com/khicago/got/util/typer"
 	"github.com/khicago/irr"
 )
 
@@ -87,7 +89,8 @@ func (c *Connector) Use(ctx context.Context, nodeMap map[string]Node, script str
 
 // connectByAST connects nodes based on the AST.
 func (c *Connector) connectByAST(ctx context.Context, nodeMap map[string]Node, ast *ASTNode) error {
-	// logger := wlog.ByCtx(ctx, "connector.connectNodes")
+	logger := wlog.ByCtx(ctx, "connector.ast")
+
 	for ast != nil {
 		startNode, ok := nodeMap[ast.StartNode]
 		if !ok {
@@ -101,40 +104,76 @@ func (c *Connector) connectByAST(ctx context.Context, nodeMap map[string]Node, a
 			}
 		}
 
-		if ast.PrefabKey != "" {
-			if nodeMap[ast.PrefabKey] == nil {
-				return fmt.Errorf("prefab node not found: %s", ast.PrefabKey)
-			}
-			// Handle prefab node
-			prefabNode := nodeMap[ast.PrefabKey].Clone()
-
-			if err := Connect(startNode, ast.StartOut, prefabNode, SingleNodeParamName); err != nil {
-				return irr.Wrap(err, "connect prefab node [in] %s -->|%s:%s| %s", startNode, ast.StartOut, SingleNodeParamName, prefabNode)
-			}
-
-			if ast.EndNode == DiscardNodeParamName { // 如果 prefab 的下游节点是 discard
-				if len(prefabNode.OutNames()) != 0 {
-					return fmt.Errorf("discard prefab node %s cannot have out param %v", prefabNode, prefabNode.OutNames())
-				}
-			} else {
-				if endNode == nil {
-					return fmt.Errorf("end node enter is discard, but prefab node %s has out param %v", prefabNode, prefabNode.OutNames())
-				}
-				if err := Connect(prefabNode, SingleNodeParamName, endNode, ast.EndIn); err != nil {
-					return irr.Wrap(err, "connect prefab node [out] %s -->|%s:%s| %s", prefabNode, SingleNodeParamName, ast.EndIn, endNode)
-				}
-			}
-
-		} else {
+		if ast.PrefabKey == "" {
 			// Handle standard and simplified connection
 			if err := Connect(startNode, ast.StartOut, endNode, ast.EndIn); err != nil {
 				return irr.Wrap(err, "connect normal node [out] %s", ast)
 			}
-			// logger.Infof("connect normal node [out] %s -->|%s:%s| %s", startNode.Name(), ast.StartOut, ast.EndIn, endNode.Name())
+			logger.Debugf("connect normal node [out] %s -->|%s:%s| %s", startNode, ast.StartOut, ast.EndIn, endNode)
+		} else {
+			if err := c.connectAstPrefab(ctx, ast.PrefabKey, nodeMap, startNode, endNode, ast.StartOut, ast.EndIn); err != nil {
+				return irr.Wrap(err, "connect prefab node [in] %s", ast)
+			}
+			logger.Debugf("connect prefab node [in] %s -->|%s:%s| %s", startNode, ast.StartOut, ast.EndIn, endNode)
 		}
 
 		ast = ast.Next
 	}
 
+	return nil
+}
+
+func (c *Connector) connectAstPrefab(ctx context.Context, prefabSetting string, nodeMap map[string]Node, startNode, endNode Node, startOutParam, endInParam string) error {
+	logger := wlog.ByCtx(ctx, "connector.ast_prefab")
+
+	prefabKeys := typer.SliceFilter(
+		typer.SliceMap(strings.Split(prefabSetting, ","), strings.TrimSpace),
+		func(s string) bool { return !typer.IsZero(s) },
+	)
+	logger.Infof("got prefab keys %v form `%v`", prefabKeys, prefabSetting)
+
+	if len(prefabKeys) == 0 {
+		return nil
+	}
+
+	clonePrefab := func(prefabKey string) (Node, error) {
+		if nodeMap[prefabKey] == nil {
+			return nil, fmt.Errorf("prefab node not found: `%s`", prefabKey)
+		}
+		return nodeMap[prefabKey].Clone(), nil
+	}
+
+	clone, err := clonePrefab(prefabKeys[0])
+	if err != nil {
+		return err
+	}
+
+	// start => first clone
+	if err = Connect(startNode, startOutParam, clone, SingleNodeParamName); err != nil {
+		return irr.Wrap(err, "connect start to clone: %s -->|%s:| %s", startNode, startOutParam, clone)
+	}
+
+	// clone => clone
+	for i := 1; i < len(prefabKeys); i++ {
+		newClone, err := clonePrefab(prefabKeys[i])
+		if err != nil {
+			return err
+		}
+		if err = Connect(clone, SingleNodeParamName, newClone, SingleNodeParamName); err != nil {
+			return irr.Wrap(err, "connect between clone: %s --> %s", clone, newClone)
+		}
+		clone = newClone
+	}
+
+	// last clone => end
+	if endNode == nil { // 接地了
+		if len(clone.OutNames()) != 0 {
+			return irr.Error("discard clone %s cannot have out param %v", clone, clone.OutNames())
+		}
+		return nil
+	}
+	if err = Connect(clone, SingleNodeParamName, endNode, endInParam); err != nil {
+		return irr.Wrap(err, "connect clone to end: %s -->|:%s| %s", clone, endInParam, endNode)
+	}
 	return nil
 }

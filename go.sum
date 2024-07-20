@@ -291,6 +291,8 @@ github.com/khicago/got v0.0.0-20240714174431-e0f7c5dd8edc h1:XqvV/MZaVAl7WcRFOKf
 github.com/khicago/got v0.0.0-20240714174431-e0f7c5dd8edc/go.mod h1:23rzkvU/VYF9PPBT9hMXdz1FUlI7gAPsv3xG9krp2o0=
 github.com/khicago/got v0.0.0-20240714180706-bb8700454b96 h1:P1oOxilW6ftf5HFg36RT9B005+8av9jj9ExrGi2l8YA=
 github.com/khicago/got v0.0.0-20240714180706-bb8700454b96/go.mod h1:23rzkvU/VYF9PPBT9hMXdz1FUlI7gAPsv3xG9krp2o0=
+github.com/khicago/got v0.0.0-20240720091522-5f39949ec102 h1:aepCR9YYabXs5sABsiXG5n+mlymBSviGcI+/GDVZPis=
+github.com/khicago/got v0.0.0-20240720091522-5f39949ec102/go.mod h1:23rzkvU/VYF9PPBT9hMXdz1FUlI7gAPsv3xG9krp2o0=
 github.com/khicago/irr v0.0.0-20240309052027-df085c2216f6 h1:rtA26tT0ggG/veBxkhHwcqdUml5F/o8Cnc5Ov0FQLQ4=
 github.com/khicago/irr v0.0.0-20240309052027-df085c2216f6/go.mod h1:Xkg7IeaDuUdIGXfCYmJqMnxXznPAaRC50pGoyc4DcGQ=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
