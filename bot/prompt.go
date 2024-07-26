@@ -93,3 +93,29 @@ func (p *Prompt) BuildSystemMessage(ctx context.Context, tm *tool.Manager, argum
 		Content: all,
 	}
 }
+
+// ReplaceContentBetween replaces the content between startStr and endStr with newContent
+func (p *Prompt) ReplaceContentBetween(startStr, endStr, newContent string) {
+	content := p.Content
+	startIdx := 0
+	endIdx := len(content)
+
+	if startStr != "" {
+		startIdx = strings.Index(content, startStr)
+		if startIdx == -1 {
+			return
+		}
+		startIdx += len(startStr)
+	}
+
+	if endStr != "" {
+		endIdx = strings.Index(content, endStr)
+		if endIdx == -1 {
+			return
+		}
+	}
+
+	// Replace the content between startIdx and endIdx
+	updatedContent := content[:startIdx] + newContent + content[endIdx:]
+	p.Content = updatedContent
+}

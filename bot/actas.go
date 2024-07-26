@@ -21,19 +21,19 @@ const (
 
 var Caller = &call.Caller{Prefix: CallPrefix, Regex: regexp.MustCompile(`agent_call::(\w+)\((.*?)\)`)}
 
-// InitAllActAs 初始化所有 ActAs
-func InitAllActAs(ctx context.Context, allBots ...*Bot) {
+// InitActAsForBots 初始化所有 ActAs
+func InitActAsForBots(ctx context.Context, allBots ...*Bot) {
 	configs := typer.SliceMap(allBots, func(from *Bot) *Config {
 		return from.Config
 	})
 	for i := range allBots {
 		b := allBots[i]
-		// wlog.ByCtx(ctx, "InitAllActAs").Infof("bot %d.%s act_as= %s, conf=%v", i, b.PrefabName, b.AckAs, b.Config)
+		// wlog.ByCtx(ctx, "InitActAsForBots").Infof("bot %d.%s act_as= %s, conf=%v", i, b.PrefabName, b.AckAs, b.Config)
 		if b.AckAs == ActAsCoordinator {
 			b.InjectCoordinatorPrompt(typer.SliceFilter(configs, func(c *Config) bool {
 				return c.PrefabName != b.PrefabName
 			})) // 不把自己放进去
-			// wlog.ByCtx(ctx, "InitAllActAs").Infof("find coordinator at %s, with context %s", b.Config.PrefabName, b.ActAsContext)
+			// wlog.ByCtx(ctx, "InitActAsForBots").Infof("find coordinator at %s, with context %s", b.Config.PrefabName, b.ActAsContext)
 		}
 	}
 }

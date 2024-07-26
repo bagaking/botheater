@@ -2,7 +2,6 @@ package wf_rag
 
 import (
 	"context"
-
 	"github.com/bagaking/goulp/jsonex"
 	"github.com/khicago/irr"
 
@@ -22,24 +21,28 @@ func (w workflowCtx) GetChunkSize() int {
 }
 
 type UsingBots struct {
-	ExtractEntity   *bot.Bot
-	ExtractRelation *bot.Bot
-	MergeEntity     *bot.Bot
+	ExtractEntity   *bot.Bot `bot:"rag_extract_entity"`
+	ExtractRelation *bot.Bot `bot:"rag_extract_relation"`
+	MergeEntity     *bot.Bot `bot:"rag_merge_entity"`
 }
 
-func TryWorkflow(ctx context.Context, bots UsingBots) {
+func TryWorkflow(ctx context.Context, loader *bot.Loader) {
 	wfCtx := workflowCtx{
 		ChunkSize: 3 * 1024,
 	}
 	ctx = workflow.WithCtx(ctx, wfCtx)
+	logger := wlog.ByCtx(ctx, "TryWorkflow")
 
-	log := wlog.ByCtx(ctx, "TryWorkflow")
+	use := UsingBots{}
+	if err := loader.StaplingBots(ctx, &use); err != nil {
+		logger.Fatalf("stapling bots failed, err= %v", err)
+	}
 
 	wf := workflow.New("rag_test")
 
 	// 定义起始节点和结束节点
 	if err := wf.SetStartNode([]string{"text"}); err != nil {
-		log.WithError(err).Errorf("set start node failed")
+		logger.WithError(err).Errorf("set start node failed")
 		return
 	}
 	wf.SetEndNode([]string{"entities", "relations"})
@@ -57,9 +60,9 @@ func TryWorkflow(ctx context.Context, bots UsingBots) {
 		return lst, nil
 	}
 
-	nodeBotExtractEntity := workflow.NewNodeByDef(nodes.NewBotWorkflowNode(bots.ExtractEntity, unmarshal2StrLst))
-	nodeBotExtractRelation := workflow.NewNodeByDef(nodes.NewBotWithHistoryWorkflowNode(bots.ExtractRelation, unmarshal2StrLst))
-	nodeBotMergeEntity := workflow.NewNodeByDef(nodes.NewBotReduceWorkflowNode(bots.MergeEntity, unmarshal2StrLst))
+	nodeBotExtractEntity := workflow.NewNodeByDef(nodes.NewBotWorkflowNode(use.ExtractEntity, unmarshal2StrLst))
+	nodeBotExtractRelation := workflow.NewNodeByDef(nodes.NewBotWithHistoryWorkflowNode(use.ExtractRelation, unmarshal2StrLst))
+	nodeBotMergeEntity := workflow.NewNodeByDef(nodes.NewBotReduceWorkflowNode(use.MergeEntity, unmarshal2StrLst))
 
 	conn := &workflow.Connector{}
 	{
@@ -85,33 +88,33 @@ func TryWorkflow(ctx context.Context, bots UsingBots) {
 		conn.Use(ctx, nodeMap, Script1)
 	}
 	if err := conn.Error(); err != nil {
-		log.Fatalf("connect failed, err= %v", err)
+		logger.Fatalf("connect failed, err= %v", err)
 	}
 
 	// 执行工作流
 	outTable, err := wf.Execute(ctx, workflow.ParamsTable{"text": Text4Test})
 	if err != nil {
-		log.Fatalf("工作流执行失败: %v", err)
+		logger.Fatalf("工作流执行失败: %v", err)
 	}
 	if !wf.Finished() {
-		log.Fatalf("工作流执行异常")
+		logger.Fatalf("工作流执行异常")
 	}
 
 	entities, ok := outTable["entities"].(string)
 	if !ok {
-		log.Fatalf("工作流执行结果 entities 类型错误")
+		logger.Fatalf("工作流执行结果 entities 类型错误")
 	}
 
 	relations, ok := outTable["relations"].(string)
 	if !ok {
-		log.Fatalf("工作流执行结果 relations 类型错误")
+		logger.Fatalf("工作流执行结果 relations 类型错误")
 	}
 
-	log.Infof("entities len= %d, token= %d", len(entities), utils.CountTokens(entities))
-	log.Infof("relations len= %d, token= %d", len(relations), utils.CountTokens(relations))
+	logger.Infof("entities len= %d, token= %d", len(entities), utils.CountTokens(entities))
+	logger.Infof("relations len= %d, token= %d", len(relations), utils.CountTokens(relations))
 
-	log.Infof("\n\n%s", utils.SPrintWithFrameCard("抽取的实体", entities, 168, utils.StyConclusion))
-	log.Infof("\n\n%s", utils.SPrintWithFrameCard("这些实体的关系", relations, 168, utils.StyConclusion))
+	logger.Infof("\n\n%s", utils.SPrintWithFrameCard("抽取的实体", entities, 168, utils.StyConclusion))
+	logger.Infof("\n\n%s", utils.SPrintWithFrameCard("这些实体的关系", relations, 168, utils.StyConclusion))
 }
 
 const Script1 = `%%{init: {'theme':'base',"fontFamily": "monospace", "sequence": { "wrap": true }, "flowchart": { "curve": "linear" } }}%%
