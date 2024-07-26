@@ -19,6 +19,39 @@ const (
 	ContinueMessage = `如果达到目标了请回答 "任务完成"，并对整个聊天进行总结后，对用户的原始问题进行正式答复; 否则, 进一步分析接下来该做什么，并说明步骤`
 )
 
+func Play(ctx context.Context, loader *bot.Loader) {
+	logger := wlog.ByCtx(ctx, "play_theater")
+	//TestNormalChat(ctx, botBasic, "给我一个好点子")
+	//TestNormalChat(ctx, botBasic, "阅读当前目录下的关键代码内容后，找到和处理 req.Messages & botBasic history 有关的代码，并提取出一个队列来对其进行优化。给我这个队列的代码")
+	//TestContinuousChat(ctx, botBasic)
+	//TestStreamChat(ctx, botBasic, req)
+
+	h := history.NewHistory()
+	//MultiAgentChat(ctx, h, "接下来我要对本地仓库代码做优化，准备好了吗？", botCoordinator) //
+	//
+	//MultiAgentChat(ctx, h,
+	//	"阅读当前目录下的关键代码内容后，找到和处理 req.Messages & botBasic history 有关的代码，并提取出一个队列来对其进行优化。给我这个队列的代码",
+	//	botCoordinator, botFileReader, botBasic)
+	//
+	//MultiAgentChat(ctx, h, "帮我找到比特币最近的行情", botCoordinator, botFileReader, botBasic) // 搜索可能要优化
+	//MultiAgentChat(ctx, h, "帮我总结什么是鸟狗式", bots...)
+	//
+	//MultiAgentChat(ctx, h, "什么是vector_database", bots...)
+
+	bots, err := loader.GetBots()
+	if err != nil {
+		logger.Fatalf("Failed to load bots: %v", err)
+	}
+	bot.InitActAsForBots(ctx, bots...)
+	MultiAgentChat(ctx, h, "找到现在这个本地仓库 util 里在带框架卡片具体实现原理和用法，然后参照任意 github 的 readme 格式，写一份 README.md 介绍功能的原理和具体用法", bots...)
+	//theater.MultiAgentChat(ctx, h, "找到现在这个本地仓库 util 里在把文字 format 成卡片格式的原理具体实现原理和用法，然后参照任意 github 的 readme 格式，写一份 README.md 介绍功能的原理和具体用法", bots...)
+	//theater.MultiAgentChat(ctx, h, "现在这个本地仓库中的框架，能够确保 agent 很好的调用 functions，看看这是怎么做到的？这里的设计有什么独到之处？然后上网看看有没有类似的实现", bots...)
+	//theater.MultiAgentChat(ctx, h, "找到现在这个本地仓库中 bot 的实现代码，然后对 bot 的实现思路进行总结", bots...)
+	//theater.MultiAgentChat(ctx, h, "总结之前聊天里，你的观点, 以及用于佐证的代码", botCoordinator) //
+	//theater.MultiAgentChat(ctx, h, "针对这些代码进行改写，使其更优雅，要注意不要重复造轮子", botBasic)
+
+}
+
 func MultiAgentChat(ctx context.Context, h *history.History, question string, bots ...*bot.Bot) {
 	l2, ctx := wlog.ByCtxAndRemoveCache(ctx, "MultiAgentChat")
 	log := l2.WithField("mode", "auto")

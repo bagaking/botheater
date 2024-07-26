@@ -3,6 +3,8 @@ package utils
 import (
 	"context"
 	"fmt"
+	"github.com/bagaking/goulp/jsonex"
+	"github.com/khicago/irr"
 	"io"
 	"os"
 	"path/filepath"
@@ -74,4 +76,14 @@ func configureLogger(logger *logrus.Logger, outFile string) *logrus.Logger {
 		FullTimestamp: true, // 显示完整时间戳
 	})
 	return logger
+}
+
+func Unmarshal2[T any](str string) (ret T, err error) {
+	if str == "" {
+		return ret, irr.Error("str is empty")
+	}
+	if err = jsonex.Unmarshal([]byte(str), &ret); err != nil {
+		return ret, irr.Wrap(err, "unmarshal tidy answer to %T failed", ret)
+	}
+	return ret, nil
 }

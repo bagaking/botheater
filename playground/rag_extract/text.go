@@ -1,4 +1,4 @@
-package wf_rag
+package rag_extract
 
 const Text4Test = `
 第四十三回  诸葛亮舌战群儒  鲁子敬力排众议

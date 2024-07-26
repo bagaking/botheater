@@ -1,10 +1,7 @@
-package wf_rag
+package rag_extract
 
 import (
 	"context"
-	"github.com/bagaking/goulp/jsonex"
-	"github.com/khicago/irr"
-
 	"github.com/bagaking/botheater/bot"
 	"github.com/bagaking/botheater/utils"
 	"github.com/bagaking/botheater/workflow"
@@ -26,7 +23,7 @@ type UsingBots struct {
 	MergeEntity     *bot.Bot `bot:"rag_merge_entity"`
 }
 
-func TryWorkflow(ctx context.Context, loader *bot.Loader) {
+func Play(ctx context.Context, loader *bot.Loader) {
 	wfCtx := workflowCtx{
 		ChunkSize: 3 * 1024,
 	}
@@ -47,17 +44,10 @@ func TryWorkflow(ctx context.Context, loader *bot.Loader) {
 	}
 	wf.SetEndNode([]string{"entities", "relations"})
 
-	nodeChunk := workflow.NewNode("SplitOriginTextIntoChunks", nodes.SplitOriginTextIntoChunks[workflowCtx], []string{"input"}, []string{"chunks"})
+	nodeChunk := workflow.NewNodeByDef(nodes.NewChunkNode[workflowCtx](nil))
 
 	unmarshal2StrLst := func(answer string) (any, error) {
-		if answer == "" {
-			return nil, irr.Error("answer is empty")
-		}
-		lst := make([]any, 0)
-		if err := jsonex.Unmarshal([]byte(answer), &lst); err != nil {
-			return nil, irr.Wrap(err, "unmarshal tidy answer to list failed")
-		}
-		return lst, nil
+		return utils.Unmarshal2[[]string](answer)
 	}
 
 	nodeBotExtractEntity := workflow.NewNodeByDef(nodes.NewBotWorkflowNode(use.ExtractEntity, unmarshal2StrLst))

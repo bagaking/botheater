@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/bagaking/botheater/wf_rag"
-
+	"github.com/bagaking/botheater/playground/theater"
 	"github.com/sirupsen/logrus"
 
 	"github.com/bagaking/botheater/bot"
@@ -20,7 +19,8 @@ func main() {
 	logrus.SetLevel(logrus.TraceLevel)
 
 	ctx := context.Background()
-	log := wlog.ByCtx(context.Background())
+	logger := wlog.ByCtx(context.Background())
+	logger.Infof("start botheater playground ...")
 
 	tm.RegisterTool(&tools.LocalFileReader{})
 	tm.RegisterTool(&tools.RandomIdeaGenerator{})
@@ -29,62 +29,58 @@ func main() {
 
 	conf := LoadConf(ctx)
 
-	botCoordinator, err := conf.NewBot(ctx, "botheater_coordinator", tm)
-	if err != nil {
-		log.WithError(err).Fatalf("create botheater_coordinator failed")
-	}
+	botLoader := bot.NewBotLoader(tm).LoadBots(ctx, conf.bots)
 
-	botBasic, err := conf.NewBot(ctx, "botheater_basic", tm)
-	if err != nil {
-		log.WithError(err).Fatalf("create botBasic failed")
-	}
-
-	botFileReader, err := conf.NewBot(ctx, "botheater_filereader", tm)
-	if err != nil {
-		log.WithError(err).Fatalf("create botheater_coordinator failed")
-	}
-
-	botFileSearcher, err := conf.NewBot(ctx, "botheater_filesearcher", tm)
-	if err != nil {
-		log.WithError(err).Fatalf("create botheater_searcher failed")
-	}
-
-	botSearcher, err := conf.NewBot(ctx, "botheater_searcher", tm)
-	if err != nil {
-		log.WithError(err).Fatalf("create botheater_searcher failed")
-	}
-
-	botCodeReader, err := conf.NewBot(ctx, "botheater_codereader", tm)
-	if err != nil {
-		log.WithError(err).Fatalf("create botheater_codereader failed")
-	}
-
-	botRagExtractEntity, err := conf.NewBot(ctx, "rag_extract_entity", tm)
-	if err != nil {
-		log.WithError(err).Fatalf("create rag_extract_entity failed")
-	}
-
-	botRagMergeEntity, err := conf.NewBot(ctx, "rag_merge_entity", tm)
-	if err != nil {
-		log.WithError(err).Fatalf("create rag_merge_entity failed")
-	}
-
-	botRagExtractRelation, err := conf.NewBot(ctx, "rag_extract_relation", tm)
-	if err != nil {
-		log.WithError(err).Fatalf("create rag_extract_relation failed")
-	}
-
-	bots := []*bot.Bot{
-		botCoordinator, botBasic, botSearcher, botFileSearcher, botFileReader, botCodeReader,
-	}
-
-	bot.InitAllActAs(ctx, bots...)
-
-	log.Info(botBasic.String())
-
-	wf_rag.TryWorkflow(ctx, wf_rag.UsingBots{
-		ExtractEntity:   botRagExtractEntity,
-		ExtractRelation: botRagExtractRelation,
-		MergeEntity:     botRagMergeEntity,
-	})
+	theater.Play(ctx, botLoader)
 }
+
+//
+//func TestNormalChat(ctx context.Context, b *bot.Bot, question string) {
+//	log := wlog.ByCtx(ctx, "TestNormalChat")
+//	h := history.NewHistory()
+//	resp, err := b.Question(ctx, h, question)
+//	if err != nil {
+//		log.WithError(err).Errorf("chat failed")
+//	}
+//
+//	log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", resp)
+//}
+//
+//func TestContinuousChat(ctx context.Context, b *bot.Bot) {
+//	log := wlog.ByCtx(ctx, "TestContinuousChat")
+//	reader := bufio.NewReader(os.Stdin)
+//
+//	for {
+//		fmt.Print("Enter your question: ")
+//		question, _ := reader.ReadString('\n')
+//		question = question[:len(question)-1] // 去掉换行符
+//
+//		h := history.NewHistory()
+//		got, err := b.Question(ctx, h, question)
+//		if err != nil {
+//			log.WithError(err).Errorf("chat failed")
+//			continue
+//		}
+//
+//		log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", got)
+//
+//	}
+//}
+
+//func TestStreamChat(ctx context.Context, b *bot.Bot, question string) {
+//	log := wlog.ByCtx(ctx, "TestNormalChat")
+//
+//	handler := func(resp *api.ChatResp) {
+//		if resp.Error != nil {
+//			// it is possible that error occurs during response processing
+//			log.Info(jsonex.MustMarshalToString(resp.Error))
+//			return
+//		}
+//		log.Infof("=== chat answer ===\n\n%s=== chat answer ===\n\n", coze.Resp2Str(resp))
+//	}
+//
+//	h := history.NewHistory()
+//	if err := b.StreamChat(ctx, h, question, handler); err != nil {
+//		log.WithError(err).Errorf("chat failed")
+//	}
+//}
