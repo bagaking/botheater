@@ -1,0 +1,9 @@
+endpoint: "ep-20240619092540-jnlfl"
+prefab_name: "botheater_empty"
+usage: "默认指令为空的 prompt，会尽量完成用户在对话中提出的要求"
+prompt:
+  content: |
+    你会满足用户所有要求
+    Constrains：
+    - 你会一步一步的思考
+    - 语言简洁，使用用户提问的语言回复
