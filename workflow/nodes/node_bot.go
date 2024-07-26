@@ -19,12 +19,21 @@ import (
 type WFBotNode struct {
 	*bot.Bot
 	afterFunc func(answer string) (any, error)
+	his       *history.History
 }
 
 const (
 	InNameBotQuestion  = "question"
 	OutNameBotQuestion = "answer"
 )
+
+func NewBotWorkflowNodeWithHistory(botGist *bot.Bot, his *history.History, afterFunc func(answer string) (any, error)) *WFBotNode {
+	return &WFBotNode{
+		Bot:       botGist,
+		afterFunc: afterFunc,
+		his:       his,
+	}
+}
 
 func NewBotWorkflowNode(botGist *bot.Bot, afterFunc func(answer string) (any, error)) *WFBotNode {
 	return &WFBotNode{
@@ -79,7 +88,12 @@ func (n *WFBotNode) Execute(ctx context.Context, params workflow.ParamsTable, si
 
 		if err = proretry.Run(func() error { // bot 请求错误，或者解析错误，都会进行重试
 			output := ""
-			if output, err = n.Bot.Question(ctx, history.NewHistory(), t.input); err != nil {
+			his := n.his
+			if his == nil {
+				his = history.NewHistory()
+			}
+
+			if output, err = n.Bot.Question(ctx, his, t.input); err != nil {
 				return irr.Wrap(err, "bot question failed, input=%s", strings.Replace(t.input, "\n", "\\n", -1))
 			} else {
 				item = output

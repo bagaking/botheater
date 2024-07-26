@@ -55,5 +55,5 @@ func newWN(name string, executor NodeExecutor, inputParamNames, outputParamNames
 // NewNode
 // inputParamNames 校验输入参数，如果设置，关联上游时不能指定超出该范围的参数名并且，且如果未关联所有上游时 IsSet 会返回 false
 func NewNode(name string, executor NodeExecutor, inputParamNames, outputParamNames []string, opts ...OptionsFunc) Node {
-	return newWN(name, executor, inputParamNames, outputParamNames)
+	return newWN(name, executor, inputParamNames, outputParamNames, opts...)
 }

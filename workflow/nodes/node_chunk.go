@@ -2,34 +2,51 @@ package nodes
 
 import (
 	"context"
-	"strings"
 
-	"github.com/bagaking/goulp/wlog"
-	"github.com/khicago/got/util/typer"
-	"github.com/khicago/irr"
+	"strings"
 
 	"github.com/bagaking/botheater/utils"
 	"github.com/bagaking/botheater/workflow"
+	"github.com/bagaking/goulp/wlog"
+	"github.com/khicago/got/util/typer"
+	"github.com/khicago/irr"
 )
 
 type (
 	ChunkSizeContext interface{ GetChunkSize() int }
+
+	ChunkMethod func(ctx context.Context, input string, size int) []string
+
+	WFChunkNode[T ChunkSizeContext] struct {
+		Method ChunkMethod
+	}
 )
 
 const (
-	LoopUpperBound = 999
+	InNameChunk  = "input"
+	OutNameChunk = "chunks"
+
+	LoopUpperBound   = 999
+	DefaultChunkSize = 1024 * 8
 )
 
-var _ workflow.NodeExecutor = SplitOriginTextIntoChunks[interface{ GetChunkSize() int }]
+var _ workflow.NodeDef = &WFChunkNode[ChunkSizeContext]{}
 
-// SplitOriginTextIntoChunks
+func NewChunkNode[T ChunkSizeContext](method ChunkMethod) *WFChunkNode[T] {
+	ret := &WFChunkNode[T]{
+		Method: method,
+	}
+	return ret
+}
+
+// Execute - SplitTextIntoChunks
 // in - input
 // out - chunks
-func SplitOriginTextIntoChunks[TCtx ChunkSizeContext](ctx context.Context, params workflow.ParamsTable, signal workflow.SignalTarget) (log string, err error) {
-	logger := wlog.ByCtx(ctx, "SplitOriginTextIntoChunks")
+func (n *WFChunkNode[T]) Execute(ctx context.Context, params workflow.ParamsTable, signal workflow.SignalTarget) (log string, err error) {
+	logger := wlog.ByCtx(ctx, "chunk")
 	finished := false
 
-	input, _input := "", params["input"]
+	input, _input := "", params[InNameChunk]
 	if str, ok := _input.(string); !ok {
 		return "", irr.Error("input param is not set")
 	} else {
@@ -37,15 +54,19 @@ func SplitOriginTextIntoChunks[TCtx ChunkSizeContext](ctx context.Context, param
 	}
 
 	// 从 context 中获取 workflowCtx
-	wfCtx, _ := workflow.CtxValue[TCtx](ctx)
-	size := typer.Or(wfCtx.GetChunkSize(), 1024*8)
+	wfCtx, _ := workflow.CtxValue[T](ctx)
+	size := typer.Or(wfCtx.GetChunkSize(), DefaultChunkSize)
 
+	fn := n.Method
+	if fn == nil {
+		fn = splitOriginTextIntoChunks
+	}
 	logger.Infof("chunk size is %d, using %d, content tokens is %v", wfCtx.GetChunkSize(), size, utils.CountTokens(input))
 
-	chunks := splitOriginTextIntoChunks(ctx, input, size)
+	chunks := fn(ctx, input, size)
 
-	wlog.ByCtx(ctx, "SplitOriginTextIntoChunks").Infof("chunkResult len= %d", len(chunks))
-	if finished, err = signal(ctx, "chunks", chunks); err != nil {
+	wlog.ByCtx(ctx, "SplitTextIntoChunks").Infof("chunkResult len= %d", len(chunks))
+	if finished, err = signal(ctx, OutNameChunk, chunks); err != nil {
 		return "", err
 	}
 
@@ -53,6 +74,16 @@ func SplitOriginTextIntoChunks[TCtx ChunkSizeContext](ctx context.Context, param
 		return "", irr.Error("node is not finish")
 	}
 	return "success", nil
+}
+
+func (n *WFChunkNode[T]) Name() string { return "chunk" }
+
+func (n *WFChunkNode[T]) InNames() []string {
+	return []string{InNameChunk}
+}
+
+func (n *WFChunkNode[T]) OutNames() []string {
+	return []string{OutNameChunk}
 }
 
 func splitOriginTextIntoChunks(ctx context.Context, input string, size int) []string {
