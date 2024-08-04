@@ -6,16 +6,22 @@ package coze
 
 import (
 	"context"
-	"os"
 
+	"github.com/bagaking/botheater/utils"
 	"github.com/bagaking/goulp/wlog"
 
 	client "github.com/volcengine/volc-sdk-golang/service/maas/v2"
 )
 
+const (
+	EnvKeyVOLCAccessKey  utils.EnvKey = "VOLC_ACCESSKEY"
+	EnvKeyVOLCSecretKey  utils.EnvKey = "VOLC_SECRETKEY"
+	EnvKeyDoubaoEndpoint utils.EnvKey = "DOUBAO_ENDPOINT"
+)
+
 var (
-	VOLC_ACCESSKEY = os.Getenv("VOLC_ACCESSKEY")
-	VOLC_SECRETKEY = os.Getenv("VOLC_SECRETKEY")
+	VOLC_ACCESSKEY = EnvKeyVOLCAccessKey.Read()
+	VOLC_SECRETKEY = EnvKeyVOLCSecretKey.Read()
 )
 
 func NewClient(ctx context.Context) *client.MaaS {

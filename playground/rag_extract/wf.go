@@ -2,6 +2,7 @@ package rag_extract
 
 import (
 	"context"
+
 	"github.com/bagaking/botheater/bot"
 	"github.com/bagaking/botheater/utils"
 	"github.com/bagaking/botheater/workflow"

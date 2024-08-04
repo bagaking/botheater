@@ -3,11 +3,12 @@ package utils
 import (
 	"context"
 	"fmt"
-	"github.com/bagaking/goulp/jsonex"
-	"github.com/khicago/irr"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/bagaking/goulp/jsonex"
+	"github.com/khicago/irr"
 
 	"github.com/bagaking/goulp/wlog"
 	"github.com/sirupsen/logrus"
