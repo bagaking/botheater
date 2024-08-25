@@ -22,7 +22,7 @@ import (
 
 type (
 	Config struct {
-		Endpoint string `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
+		DriverConf driver.Config `yaml:",inline" json:",inline"`
 
 		PrefabName string `yaml:"prefab_name,omitempty" json:"prefab_name,omitempty"`
 		Usage      string `yaml:"usage,omitempty" json:"usage,omitempty"`

@@ -2,10 +2,12 @@ package bot
 
 import (
 	"context"
+	"github.com/bagaking/botheater/driver"
+	"github.com/bagaking/botheater/driver/coze"
+	"github.com/bagaking/botheater/driver/ollama"
 	"reflect"
 
 	"github.com/bagaking/botheater/call/tool"
-	"github.com/bagaking/botheater/driver/coze"
 	"github.com/bagaking/goulp/wlog"
 	"github.com/khicago/got/util/typer"
 	"github.com/khicago/irr"
@@ -58,8 +60,18 @@ func (bl *Loader) LoadBot(ctx context.Context, conf *Config) *Loader {
 	if bl.err != nil {
 		return bl
 	}
-	driver := coze.New(coze.NewClient(ctx), conf.Endpoint)
-	b := New(*conf, driver, bl.tm)
+
+	var d driver.Driver
+	switch conf.DriverConf.Driver {
+	case "ollama":
+		d = ollama.New(ollama.NewClient(ctx), conf.DriverConf.Endpoint)
+	case "coze":
+		fallthrough
+	default:
+		d = coze.New(coze.NewClient(ctx), conf.DriverConf.Endpoint)
+	}
+
+	b := New(*conf, d, bl.tm)
 	bl.bots = append(bl.bots, b)
 	return bl
 }

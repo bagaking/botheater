@@ -1,0 +1,8 @@
+entry = [
+    "./driver/**/*.go",
+]
+
+exclude = [
+    ".bundle.txt",
+    "./script"
+]
